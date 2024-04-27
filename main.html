@@ -34,7 +34,7 @@
 </div>
 
 <script>
-    const shopUrl = "https://www.100percentpure.com/";
+    const shopUrl = "https://www.100percentpure.com";
 
     async function fetchProducts(url) {
         try {
@@ -118,7 +118,11 @@
 
     function updateCartUrl() {
         const encodedItems = cartItems.map(item => encodeURIComponent(`${item.variantId}:1`)).join(',');
-        const cartUrl = `${shopUrl}/cart/${encodedItems}?discount=LSVIP`;
+        let cartUrl = `${shopUrl}/cart/${encodedItems}`;
+        // Apply discount only for littlesleepies.com
+        if (shopUrl.includes("littlesleepies.com")) {
+            cartUrl += "?discount=LSVIP";
+        }
         const cartLink = document.getElementById('cartUrl');
         cartLink.onclick = () => window.open(cartUrl, '_blank');
         document.getElementById('cartUrlDisplay').innerText = cartUrl;
