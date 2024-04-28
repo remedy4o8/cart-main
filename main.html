@@ -26,7 +26,7 @@
                 <div class="overflow-y-auto px-4">
                     <h2 class="text-2xl mb-4">Shopping Cart</h2>
                     <ul id="cartItems" class="list-none"></ul>
-                    <button id="cartUrl" class="mt-4 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">View Cart</button>
+                    <button id="cartUrl" class="mt-4 bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">View Cart</button>
                     <p class="mt-4 text-sm" id="cartUrlDisplay"></p>
                 </div>
             </div>
@@ -49,7 +49,7 @@
         function displayProducts(data) {
             const container = document.getElementById('products');
             if (!data.products || data.products.length === 0) {
-                container.innerHTML = '<div class="w-full p-4">No products found.</div>';
+                container.innerHTML = '<div class="w-full p-4">No Products Found. =[ </div>';
                 return;
             }
             data.products.forEach(product => {
