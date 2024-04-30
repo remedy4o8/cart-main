@@ -4,14 +4,30 @@
     <meta charset="UTF-8">
     <title>Remedy's Magic Shopping Cart</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <style>
         body {
             background-color: #000; /* Dark background */
         }
-
         /* Hide the dot from <li> elements */
         .py-1.variant {
             list-style-type: none;
+        }
+        #notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #d291bc; /* Cute light purple */
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 1000;
+            font-size: 16px;
+        }
+        .fa-cart-plus, .fa-trash-alt {
+            margin-right: 10px;
         }
     </style>
 </head>
@@ -33,8 +49,9 @@
             </div>
         </div>
     </div>
+    <div id="notification"><i class="fas fa-info-circle"></i> <span id="notificationText"></span></div>
     <script>
-        const shopUrl = "https://littlesleepies.com";
+        const shopUrl = "https://littlesleepies.com/";
         async function fetchProducts(url) {
             try {
                 const response = await fetch(url);
@@ -83,12 +100,15 @@
             cartItems.push(item);
             updateCartList();
             updateCartUrl();
+            displayNotification('Added', `Added to cart: ${title}`);
         }
 
         function removeItemFromCart(index) {
+            const itemTitle = cartItems[index].title; // Capture title for notification
             cartItems.splice(index, 1); // Remove item at the index
             updateCartList(); // Update the cart list display
             updateCartUrl(); // Update the cart URL to reflect the change
+            displayNotification('Removed', `Removed from cart: ${itemTitle}`);
         }
 
         function updateCartList() {
@@ -124,7 +144,17 @@
             document.getElementById('cartUrlDisplay').innerText = cartUrl;
         }
 
-        fetchProducts('https://littlesleepies.com/collections/ready-to-rodeo/products.json');
+        function displayNotification(action, message) {
+            const notificationElement = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            notificationText.innerText = message;
+            notificationElement.style.opacity = 1;
+            setTimeout(() => {
+                notificationElement.style.opacity = 0;
+            }, 2500); // Fade out after 2.5 seconds
+        }
+
+        fetchProducts('https://littlesleepies.com/collections/vip-early-access/products.json');
     </script>
 </body>
 </html>
