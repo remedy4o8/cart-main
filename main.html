@@ -12,6 +12,12 @@
         /* Hide the dot from <li> elements */
         .py-1.variant {
             list-style-type: none;
+            padding: 4px;
+        }
+        .variants-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
         }
         #notification {
             position: fixed;
@@ -51,7 +57,7 @@
     </div>
     <div id="notification"><i class="fas fa-info-circle"></i> <span id="notificationText"></span></div>
     <script>
-        const shopUrl = "https://littlesleepies.com";
+        const shopUrl = "https://littlesleepies.com/";
         async function fetchProducts(url) {
             try {
                 const response = await fetch(url);
@@ -70,6 +76,15 @@
                 container.innerHTML = '<div class="w-full p-4">No Products Found. =[ </div>';
                 return;
             }
+            // Sort to bring any product with "Dreams Large Cloud Blanket" in the title to the front
+            data.products.sort((a, b) => {
+                const keyPhrase = "Dreams Large Cloud Blanket";
+                const aIncludes = a.title.includes(keyPhrase);
+                const bIncludes = b.title.includes(keyPhrase);
+                if (aIncludes && !bIncludes) return -1;
+                if (!aIncludes && bIncludes) return 1;
+                return 0;
+            });
             data.products.forEach(product => {
                 const productElement = document.createElement('div');
                 productElement.className = 'w-1/4 p-4';
@@ -79,16 +94,16 @@
                         <img class="w-full h-48 object-cover" src="${firstImageSrc}" alt="Image of ${product.title}">
                         <div class="px-6 py-4">
                             <div class="font-bold text-xl mb-2">${product.title} $${product.variants[0].price}</div>
-                            <ul>`;
+                            <div class="variants-grid">`;
                 product.variants.forEach(variant => {
                     productElement.innerHTML += `
-                        <li class="py-1 variant">
+                        <div class="py-1 variant">
                             <button class="bg-pink-500 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" onclick="addVariantToCart('${product.title}', '${variant.id}', '${variant.option1}', '${variant.option2}', '${firstImageSrc}')">
                                 ${variant.option1}
                             </button>
-                        </li>`;
+                        </div>`;
                 });
-                productElement.innerHTML += `</ul></div></div>`;
+                productElement.innerHTML += `</div></div></div>`;
                 container.appendChild(productElement);
             });
         }
@@ -104,10 +119,10 @@
         }
 
         function removeItemFromCart(index) {
-            const itemTitle = cartItems[index].title; // Capture title for notification
-            cartItems.splice(index, 1); // Remove item at the index
-            updateCartList(); // Update the cart list display
-            updateCartUrl(); // Update the cart URL to reflect the change
+            const itemTitle = cartItems[index].title;
+            cartItems.splice(index, 1);
+            updateCartList();
+            updateCartUrl();
             displayNotification('Removed', `Removed from cart: ${itemTitle}`);
         }
 
@@ -133,12 +148,9 @@
         function updateCartUrl() {
             const encodedItems = cartItems.map(item => encodeURIComponent(`${item.variantId}:1`)).join(',');
             let cartUrl = `${shopUrl}/cart/${encodedItems}`;
-
-            // Append discount code if the shopUrl is 'littlesleepies.com'
             if (shopUrl.includes('littlesleepies.com')) {
                 cartUrl += '?discount=lsvip';
             }
-
             const cartLink = document.getElementById('cartUrl');
             cartLink.onclick = () => window.open(cartUrl, '_blank');
             document.getElementById('cartUrlDisplay').innerText = cartUrl;
