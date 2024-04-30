@@ -25,8 +25,7 @@
             </div>
             <div class="w-1/3 sticky top-0" style="height: calc(100vh - 2rem);">
                 <div class="overflow-y-auto px-4">
-                    <strong><h2 class="text-2xl mb-4" style="color: #98FF98;">Shopping Cart</h2>
-                    </strong>
+                    <strong><h2 class="text-2xl mb-4" style="color: #98FF98;">Shopping Cart</h2></strong>
                     <ul id="cartItems" class="list-none"></ul>
                     <button id="cartUrl" class="mt-4 bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">View Cart</button>
                     <p class="mt-4 text-sm" id="cartUrlDisplay"></p>
@@ -35,7 +34,7 @@
         </div>
     </div>
     <script>
-        const shopUrl = "https://littlesleepies.com/";
+        const shopUrl = "https://littlesleepies.com";
         async function fetchProducts(url) {
             try {
                 const response = await fetch(url);
@@ -86,6 +85,12 @@
             updateCartUrl();
         }
 
+        function removeItemFromCart(index) {
+            cartItems.splice(index, 1); // Remove item at the index
+            updateCartList(); // Update the cart list display
+            updateCartUrl(); // Update the cart URL to reflect the change
+        }
+
         function updateCartList() {
             const cartList = document.getElementById('cartItems');
             cartList.innerHTML = '';
@@ -108,12 +113,18 @@
         function updateCartUrl() {
             const encodedItems = cartItems.map(item => encodeURIComponent(`${item.variantId}:1`)).join(',');
             let cartUrl = `${shopUrl}/cart/${encodedItems}`;
+
+            // Append discount code if the shopUrl is 'littlesleepies.com'
+            if (shopUrl.includes('littlesleepies.com')) {
+                cartUrl += '?discount=lsvip';
+            }
+
             const cartLink = document.getElementById('cartUrl');
             cartLink.onclick = () => window.open(cartUrl, '_blank');
             document.getElementById('cartUrlDisplay').innerText = cartUrl;
         }
 
-        fetchProducts('https://littlesleepies.com/collections/vip-early-access/products.json');
+        fetchProducts('https://littlesleepies.com/collections/ready-to-rodeo/products.json');
     </script>
 </body>
 </html>
