@@ -76,15 +76,6 @@
                 container.innerHTML = '<div class="w-full p-4">No Products Found. =[ </div>';
                 return;
             }
-            // Sort to bring any product with "Dreams Large Cloud Blanket" in the title to the front
-            data.products.sort((a, b) => {
-                const keyPhrase = "Dreams Large Cloud Blanket";
-                const aIncludes = a.title.includes(keyPhrase);
-                const bIncludes = b.title.includes(keyPhrase);
-                if (aIncludes && !bIncludes) return -1;
-                if (!aIncludes && bIncludes) return 1;
-                return 0;
-            });
             data.products.forEach(product => {
                 const productElement = document.createElement('div');
                 productElement.className = 'w-1/4 p-4';
@@ -119,10 +110,10 @@
         }
 
         function removeItemFromCart(index) {
-            const itemTitle = cartItems[index].title;
-            cartItems.splice(index, 1);
-            updateCartList();
-            updateCartUrl();
+            const itemTitle = cartItems[index].title; // Capture title for notification
+            cartItems.splice(index, 1); // Remove item at the index
+            updateCartList(); // Update the cart list display
+            updateCartUrl(); // Update the cart URL to reflect the change
             displayNotification('Removed', `Removed from cart: ${itemTitle}`);
         }
 
@@ -148,9 +139,12 @@
         function updateCartUrl() {
             const encodedItems = cartItems.map(item => encodeURIComponent(`${item.variantId}:1`)).join(',');
             let cartUrl = `${shopUrl}/cart/${encodedItems}`;
+
+            // Append discount code if the shopUrl is 'littlesleepies.com'
             if (shopUrl.includes('littlesleepies.com')) {
                 cartUrl += '?discount=lsvip';
             }
+
             const cartLink = document.getElementById('cartUrl');
             cartLink.onclick = () => window.open(cartUrl, '_blank');
             document.getElementById('cartUrlDisplay').innerText = cartUrl;
