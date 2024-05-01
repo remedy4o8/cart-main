@@ -9,7 +9,6 @@
         body {
             background-color: #000; /* Dark background */
         }
-        /* Hide the dot from <li> elements */
         .py-1.variant {
             list-style-type: none;
             padding: 4px;
@@ -76,13 +75,6 @@
                 container.innerHTML = '<div class="w-full p-4">No Products Found. =[ </div>';
                 return;
             }
-            // Sort to prioritize "Dreams Large Cloud Blanket" first, then "Zippy", then others
-            data.products.sort((a, b) => {
-                let aScore = scoreProduct(a.title);
-                let bScore = scoreProduct(b.title);
-                return aScore - bScore;
-            });
-
             data.products.forEach(product => {
                 const productElement = document.createElement('div');
                 productElement.className = 'w-1/4 p-4';
@@ -92,25 +84,22 @@
                         <img class="w-full h-48 object-cover" src="${firstImageSrc}" alt="Image of ${product.title}">
                         <div class="px-6 py-4">
                             <div class="font-bold text-xl mb-2">${product.title} $${product.variants[0].price}</div>
-                            <div class="variants-grid">`;
+                            <div class="variants-grid"></div>
+                        </div>
+                    </div>`;
+                const variantsGrid = productElement.querySelector('.variants-grid');
                 product.variants.forEach(variant => {
-                    productElement.innerHTML += `
-                        <div class="py-1 variant">
-                            <button class="bg-pink-500 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" onclick="addVariantToCart('${product.title}', '${variant.id}', '${variant.option1}', '${variant.option2}', '${firstImageSrc}')">
-                                ${variant.option1}
-                            </button>
-                        </div>`;
+                    const variantButton = document.createElement('button');
+                    variantButton.className = 'bg-pink-500 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline';
+                    variantButton.textContent = variant.option1;
+                    variantButton.addEventListener('click', () => addVariantToCart(product.title, variant.id, variant.option1, variant.option2, firstImageSrc));
+                    const variantDiv = document.createElement('div');
+                    variantDiv.className = 'py-1 variant';
+                    variantDiv.appendChild(variantButton);
+                    variantsGrid.appendChild(variantDiv);
                 });
-                productElement.innerHTML += `</div></div></div>`;
                 container.appendChild(productElement);
             });
-        }
-
-        function scoreProduct(title) {
-            title = title.toLowerCase();
-            if (title.includes("dreams large cloud blanket")) return 1;
-            if (title.includes("zippy")) return 2;
-            return 3;  // Default for other products
         }
 
         let cartItems = [];
@@ -171,7 +160,9 @@
             }, 2500); // Fade out after 2.5 seconds
         }
 
-        fetchProducts('https://littlesleepies.com/collections/vip-early-access/products.json');
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchProducts('https://littlesleepies.com/collections/vip-early-access/products.json');
+        });
     </script>
 </body>
 </html>
