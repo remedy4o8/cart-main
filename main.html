@@ -78,7 +78,7 @@
             }
             // Sort to bring any product with "Dreams Large Cloud Blanket" or "zippy" in the title to the front
             data.products.sort((a, b) => {
-                const keyPhrases = ["Dreams Large Cloud Blanket", "zippy"];
+                const keyPhrases = ["Dreams Large Cloud Blanket", "Zippy"];
                 const aIncludes = keyPhrases.some(phrase => a.title.includes(phrase));
                 const bIncludes = keyPhrases.some(phrase => b.title.includes(phrase));
                 if (aIncludes && !bIncludes) return -1;
