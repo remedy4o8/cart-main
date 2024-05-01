@@ -64,7 +64,7 @@
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 const data = await response.json();
                 displayProducts(data);
-            } catch ( error ){
+            } catch (error) {
                 console.error('Error fetching data:', error);
                 document.getElementById('products').innerHTML = `<div class="w-full p-4 text-red-500">Error fetching products: ${error.message}</div>`;
             }
@@ -76,15 +76,13 @@
                 container.innerHTML = '<div class="w-full p-4">No Products Found. =[ </div>';
                 return;
             }
-            // Sort to bring any product with "Dreams Large Cloud Blanket" or "zippy" in the title to the front
+            // Sort to prioritize "Dreams Large Cloud Blanket" first, then "Zippy", then others
             data.products.sort((a, b) => {
-                const keyPhrases = ["dreams large cloud blanket", "zippy"]; // Lowercase phrases for comparison
-                const aIncludes = keyPhrases.some(phrase => a.title.toLowerCase().includes(phrase)); // Convert title to lowercase
-                const bIncludes = keyPhrases.some(phrase => b.title.toLowerCase().includes(phrase)); // Convert title to lowercase
-                if (aIncludes && !bIncludes) return -1;
-                if (!aIncludes && bIncludes) return 1;
-                return 0;
+                let aScore = scoreProduct(a.title);
+                let bScore = scoreProduct(b.title);
+                return aScore - bScore;
             });
+
             data.products.forEach(product => {
                 const productElement = document.createElement('div');
                 productElement.className = 'w-1/4 p-4';
@@ -106,6 +104,13 @@
                 productElement.innerHTML += `</div></div></div>`;
                 container.appendChild(productElement);
             });
+        }
+
+        function scoreProduct(title) {
+            title = title.toLowerCase();
+            if (title.includes("dreams large cloud blanket")) return 1;
+            if (title.includes("zippy")) return 2;
+            return 3;  // Default for other products
         }
 
         let cartItems = [];
