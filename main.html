@@ -64,7 +64,7 @@
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 const data = await response.json();
                 displayProducts(data);
-            } catch ( error ){
+            } catch (error) {
                 console.error('Error fetching data:', error);
                 document.getElementById('products').innerHTML = `<div class="w-full p-4 text-red-500">Error fetching products: ${error.message}</div>`;
             }
@@ -76,14 +76,15 @@
                 container.innerHTML = '<div class="w-full p-4">No Products Found. =[ </div>';
                 return;
             }
-            // Sort to bring any product with "Dreams Large Cloud Blanket" or "zippy" in the title to the front
+            // Enhanced sorting to bring "Dreams Large Cloud Blanket" first, then "Zippy"
             data.products.sort((a, b) => {
-                const keyPhrases = ["dreams large cloud blanket", "zippy"]; // Lowercase phrases for comparison
-                const aIncludes = keyPhrases.some(phrase => a.title.toLowerCase().includes(phrase)); // Convert title to lowercase
-                const bIncludes = keyPhrases.some(phrase => b.title.toLowerCase().includes(phrase)); // Convert title to lowercase
-                if (aIncludes && !bIncludes) return -1;
-                if (!aIncludes && bIncludes) return 1;
-                return 0;
+                const keyPhrasePriority = {
+                    "Dreams Large Cloud Blanket": 1,
+                    "Zippy": 2
+                };
+                const aPriority = Object.keys(keyPhrasePriority).find(key => a.title.toLowerCase().includes(key.toLowerCase())) || 99;
+                const bPriority = Object.keys(keyPhrasePriority).find(key => b.title.toLowerCase().includes(key.toLowerCase())) || 99;
+                return aPriority - bPriority;
             });
             data.products.forEach(product => {
                 const productElement = document.createElement('div');
