@@ -153,8 +153,8 @@
             if (cartItems.length > 0) {
                 cartLink.classList.remove('hidden');
                 cartUrlDisplay.classList.remove('hidden');
-                // const encodedItems = cartItems.map(item => `${item.variantId}:1`).join(',');
-                // const cartUrl = `${shopUrl}/cart/${encodedItems}`;
+                const encodedItems = cartItems.map(item => `${item.variantId}:1`).join(',');
+                const cartUrl = `${shopUrl}/cart/${encodedItems}`;
                 // cartUrlDisplay.innerText = cartUrl;
                 cartLink.onclick = () => window.open(cartUrl, '_blank');
             } else {
