@@ -15,7 +15,7 @@
         }
         .variants-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); /* Adjust based on minimum button width */
             gap: 4px;
         }
         #notification {
@@ -33,6 +33,14 @@
         }
         .fa-cart-plus, .fa-trash-alt {
             margin-right: 10px;
+        }
+        @media (max-width: 640px) {
+            .text-3xl {
+                font-size: 1.75rem; /* Smaller font size for mobile */
+            }
+            .text-2xl {
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
