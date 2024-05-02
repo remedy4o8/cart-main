@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Remedy's Magic Shopping Cart</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
@@ -9,20 +10,11 @@
         body {
             background-color: #000; /* Dark background */
         }
-        .py-1.variant {
-            list-style-type: none;
-            padding: 4px;
-        }
-        .variants-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); /* Adjust based on minimum button width */
-            gap: 4px;
-        }
         #notification {
             position: fixed;
             top: 20px;
             right: 20px;
-            background-color: #d291bc; /* Cute light purple */
+            background-color: #d291bc; /* Light purple */
             color: white;
             padding: 10px;
             border-radius: 10px;
@@ -34,30 +26,22 @@
         .fa-cart-plus, .fa-trash-alt {
             margin-right: 10px;
         }
-        @media (max-width: 640px) {
-            .text-3xl {
-                font-size: 1.75rem; /* Smaller font size for mobile */
-            }
-            .text-2xl {
-                font-size: 1.5rem;
-            }
-        }
     </style>
 </head>
 <body class="text-white">
-    <div class="container mx-auto px-4">
-        <div class="flex flex-wrap -mx-4">
-            <div class="w-full md:w-2/3 px-4">
-                <strong><h1 class="text-3xl mb-4" style="color: #008080;">Let the Shopping Begin!</h1></strong>
-                <p>Snag the latest must-haves before anyone else with our early-bird shopping spree! Simply choose your favorites, select the perfect size, and toss them into your cart. Once you're all set, hit 'View Cart' to magically teleport to the actual store's website—voilà! Everything you picked is ready to go. Just a friendly heads-up: hold off on hitting that checkout button too soon, or you might just miss out!</p>
-                <div id="products" class="flex flex-wrap"></div>
+    <div class="container mx-auto p-4">
+        <div class="flex flex-wrap">
+            <div class="w-full md:w-2/3">
+                <h1 class="text-3xl mb-4 text-teal-400">Let the Shopping Begin!</h1>
+                <p class="mb-4">Snag the latest must-haves before anyone else with our early-bird shopping spree! Select your favorites, choose the perfect size, and add them to your cart. Ready to check out? Click 'View Cart' to proceed to the store's website where your items await.</p>
+                <div id="products" class="flex flex-wrap justify-start items-stretch gap-4"></div>
             </div>
-            <div class="w-full md:w-1/3 px-4 sticky top-0" style="height: calc(100vh - 2rem);">
-                <div class="overflow-y-auto">
-                    <strong><h2 class="text-2xl mb-4" style="color: #98FF98;">Shopping Cart</h2></strong>
-                    <ul id="cartItems" class="list-none"></ul>
-                    <button id="cartUrl" class="mt-4 bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline hidden">View Cart</button>
-                    <p class="mt-4 text-sm" id="cartUrlDisplay" class="hidden"></p>
+            <div class="w-full md:w-1/3 sticky top-0" style="height: calc(100vh - 1rem);">
+                <div class="overflow-y-auto p-4">
+                    <h2 class="text-2xl mb-4 text-lime-300">Shopping Cart</h2>
+                    <ul id="cartItems" class="space-y-2"></ul>
+                    <button id="cartUrl" class="mt-4 bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded hidden">View Cart</button>
+                    <p id="cartUrlDisplay" class="mt-2 text-sm hidden"></p>
                 </div>
             </div>
         </div>
@@ -73,14 +57,14 @@
                 displayProducts(data);
             } catch (error) {
                 console.error('Error fetching data:', error);
-                document.getElementById('products').innerHTML = `<div class="w-full p-4 text-red-500">Error fetching products: ${error.message}</div>`;
+                document.getElementById('products').innerHTML = `<div class="text-red-500 p-4">Error fetching products: ${error.message}</div>`;
             }
         }
 
         function displayProducts(data) {
             const container = document.getElementById('products');
             if (!data.products || data.products.length === 0) {
-                container.innerHTML = '<div class="w-full p-4">No Products Found. =[ </div>';
+                container.innerHTML = '<div class="p-4">No Products Found.</div>';
                 return;
             }
             data.products.forEach(product => {
@@ -89,22 +73,19 @@
                 const firstImageSrc = product.images[0] ? product.images[0].src : 'placeholder.jpg';
                 productElement.innerHTML = `
                     <div class="bg-gray-800 rounded overflow-hidden shadow-lg">
-                        <img class="w-full h-48 object-cover" src="${firstImageSrc}" alt="Image of ${product.title}">
-                        <div class="px-6 py-4">
+                        <img class="w-full h-48 object-cover" src="${firstImageSrc}" alt="${product.title}">
+                        <div class="p-4">
                             <div class="font-bold text-xl mb-2">${product.title} $${product.variants[0].price}</div>
-                            <div class="variants-grid"></div>
+                            <div class="flex flex-wrap gap-2"></div>
                         </div>
                     </div>`;
-                const variantsGrid = productElement.querySelector('.variants-grid');
+                const variantsGrid = productElement.querySelector('.flex-wrap');
                 product.variants.forEach(variant => {
                     const variantButton = document.createElement('button');
-                    variantButton.className = 'bg-pink-500 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline';
+                    variantButton.className = 'bg-pink-500 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded';
                     variantButton.textContent = variant.option1;
-                    variantButton.addEventListener('click', () => addVariantToCart(product.title, variant.id, variant.option1, variant.option2, firstImageSrc));
-                    const variantDiv = document.createElement('div');
-                    variantDiv.className = 'py-1 variant';
-                    variantDiv.appendChild(variantButton);
-                    variantsGrid.appendChild(variantDiv);
+                    variantButton.onclick = () => addVariantToCart(product.title, variant.id, variant.option1, variant.option2, firstImageSrc);
+                    variantsGrid.appendChild(variantButton);
                 });
                 container.appendChild(productElement);
             });
@@ -113,56 +94,31 @@
         let cartItems = [];
 
         function addVariantToCart(title, variantId, size, color, imageUrl) {
-            const item = { title, variantId, size, color, imageUrl };
-            cartItems.push(item);
+            cartItems.push({ title, variantId, size, color, imageUrl });
             updateCartList();
-            updateCartUrl();
             displayNotification('Added', `Added to cart: ${title}`);
         }
 
         function removeItemFromCart(index) {
-            const itemTitle = cartItems[index].title;
-            cartItems.splice(index, 1);
-            updateCartList();
-            updateCartUrl();
-            displayNotification('Removed', `Removed from cart: ${itemTitle}`);
+            cartItems.splice(index, 1); // Remove the item from the array
+            updateCartList(); // Update the display list
+            displayNotification('Removed', 'Item removed from cart.'); // Show notification
         }
 
         function updateCartList() {
             const cartList = document.getElementById('cartItems');
-            cartList.innerHTML = '';
-            cartItems.forEach((item, index) => {
-                const listItem = document.createElement('li');
-                listItem.className = 'bg-gray-800 px-4 py-2 rounded mt-1 flex justify-between items-center';
-                listItem.innerHTML = `
+            cartList.innerHTML = cartItems.map((item, index) => `
+                <li class="bg-gray-800 p-2 rounded flex justify-between items-center">
                     <div class="flex items-center">
-                        <img src="${item.imageUrl}" class="w-10 h-10 object-cover rounded-full" alt="Product Image">
+                        <img src="${item.imageUrl}" class="w-10 h-10 rounded-full" alt="Product">
                         <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-100">${item.title}</p>
-                            <p class="text-sm text-gray-400">Size: ${item.size}</p>
+                            <p class="text-sm font-medium">${item.title}</p>
+                            <p class="text-xs text-gray-400">Size: ${item.size}</p>
                         </div>
                     </div>
-                    <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" onclick="removeItemFromCart(${index})">Remove</button>`;
-                cartList.appendChild(listItem);
-            });
+                    <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" onclick="removeItemFromCart(${index})">Remove</button>
+                </li>`).join('');
             toggleCartVisibility();
-        }
-
-        function updateCartUrl() {
-            const encodedItems = cartItems.map(item => encodeURIComponent(`${item.variantId}:1`)).join(',');
-            const cartUrl = `${shopUrl}/cart/${encodedItems}`;
-            const cartLink = document.getElementById('cartUrl');
-            const cartUrlDisplay = document.getElementById('cartUrlDisplay');
-            if (cartItems.length > 0) {
-                cartLink.classList.remove('hidden');
-                cartUrlDisplay.classList.remove('hidden');
-                cartUrlDisplay.innerText = cartUrl;
-                cartLink.onclick = () => window.open(cartUrl, '_blank');
-            } else {
-                cartLink.classList.add('hidden');
-                cartUrlDisplay.classList.add('hidden');
-                cartUrlDisplay.innerText = '';
-            }
         }
 
         function toggleCartVisibility() {
@@ -171,6 +127,10 @@
             if (cartItems.length > 0) {
                 cartLink.classList.remove('hidden');
                 cartUrlDisplay.classList.remove('hidden');
+                const encodedItems = cartItems.map(item => `${item.variantId}:1`).join(',');
+                const cartUrl = `${shopUrl}/cart/${encodedItems}`;
+                cartUrlDisplay.innerText = cartUrl;
+                cartLink.onclick = () => window.open(cartUrl, '_blank');
             } else {
                 cartLink.classList.add('hidden');
                 cartUrlDisplay.classList.add('hidden');
@@ -179,17 +139,12 @@
 
         function displayNotification(action, message) {
             const notificationElement = document.getElementById('notification');
-            const notificationText = document.getElementById('notificationText');
-            notificationText.innerText = message;
             notificationElement.style.opacity = 1;
-            setTimeout(() => {
-                notificationElement.style.opacity = 0;
-            }, 2500); // Fade out after 2.5 seconds
+            document.getElementById('notificationText').innerText = message;
+            setTimeout(() => notificationElement.style.opacity = 0, 2500);
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            fetchProducts('https://littlesleepies.com/collections/vip-early-access/products.json');
-        });
+        document.addEventListener('DOMContentLoaded', () => fetchProducts('https://littlesleepies.com/collections/vip-early-access/products.json'));
     </script>
 </body>
 </html>
