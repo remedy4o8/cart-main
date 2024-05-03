@@ -73,6 +73,14 @@
                 container.innerHTML = '<div class="p-4">No Products Found.</div>';
                 return;
             }
+
+            data.products.sort((a, b) => {
+                const keyPhrases = ["dreams large cloud blanket", "zippy"]; // Lowercase phrases for comparison
+                const aScore = scoreProduct(a.title, keyPhrases);
+                const bScore = scoreProduct(b.title, keyPhrases);
+                return aScore - bScore;
+            });
+
             data.products.forEach(product => {
                 const productElement = document.createElement('div');
                 productElement.className = 'w-full sm:w-1/2 md:w-1/4 p-4';
@@ -95,6 +103,13 @@
                 });
                 container.appendChild(productElement);
             });
+        }
+
+        function scoreProduct(title, keyPhrases) {
+            let score = keyPhrases.reduce((acc, phrase, index) => {
+                return title.toLowerCase().includes(phrase) ? Math.min(acc, index) : acc;
+            }, keyPhrases.length);
+            return score;
         }
 
         let cartItems = [];
