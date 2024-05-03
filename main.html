@@ -73,15 +73,6 @@
                 container.innerHTML = '<div class="p-4">No Products Found.</div>';
                 return;
             }
-
-            // Sort to bring any product with "Dreams Large Cloud Blanket" or "zippy" in the title to the front
-            data.products.sort((a, b) => {
-                const keyPhrases = ["dreams large cloud blanket", "zippy"]; // Lowercase phrases for comparison
-                const aScore = scoreProduct(a.title, keyPhrases);
-                const bScore = scoreProduct(b.title, keyPhrases);
-                return aScore - bScore;
-            });
-
             data.products.forEach(product => {
                 const productElement = document.createElement('div');
                 productElement.className = 'w-full sm:w-1/2 md:w-1/4 p-4';
@@ -106,17 +97,6 @@
             });
         }
 
-        function scoreProduct(title, keyPhrases) {
-            // Lower index in keyPhrases array means higher priority
-            let score = keyPhrases.length; // Initialize with a value larger than any index
-            keyPhrases.forEach((phrase, index) => {
-                if (title.toLowerCase().includes(phrase)) {
-                    score = Math.min(score, index); // Assign the lowest index found
-                }
-            });
-            return score;
-        }
-
         let cartItems = [];
 
         function addVariantToCart(title, variantId, size, color, imageUrl) {
@@ -126,9 +106,9 @@
         }
 
         function removeItemFromCart(index) {
-            cartItems.splice(index, 1); // Remove the item from the array
-            updateCartList(); // Update the display list
-            displayNotification('Removed', 'Item removed from cart.', 'red'); // Show notification
+            cartItems.splice(index, 1);
+            updateCartList();
+            displayNotification('Removed', 'Item removed from cart.', 'red');
         }
 
         function updateCartList() {
@@ -154,7 +134,7 @@
                 cartLink.classList.remove('hidden');
                 cartUrlDisplay.classList.remove('hidden');
                 const encodedItems = cartItems.map(item => `${item.variantId}:1`).join(',');
-                const cartUrl = `${shopUrl}/cart/${encodedItems}`;
+                const cartUrl = `${shopUrl}/cart/${encodedItems}?discount=lsvip`; // Appending discount code
                 // cartUrlDisplay.innerText = cartUrl;
                 cartLink.onclick = () => window.open(cartUrl, '_blank');
             } else {
@@ -167,7 +147,6 @@
             const notificationElement = document.getElementById('notification');
             notificationElement.style.opacity = 1;
             document.getElementById('notificationText').innerText = message;
-            // Apply color based on action
             if (color === 'red') {
                 notificationElement.classList.add('notification-red');
                 notificationElement.classList.remove('notification-purple');
