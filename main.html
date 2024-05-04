@@ -12,8 +12,8 @@
             position: fixed; top: 20px; right: 20px; background-color: #d291bc; color: #fff; padding: 10px;
             border-radius: 10px; opacity: 0; transition: opacity 0.5s, background-color 0.5s; z-index: 1000; font-size: 16px;
         }
-        .notification-red { background-color: #e3342f; }
-        .notification-purple { background-color: #d291bc; }
+        .notification-red { background-color: #e3342f; color: #ffffff; }
+        .notification-purple { background-color: #d291bc; color: #ffffff; }
         .fa-cart-plus, .fa-trash-alt { margin-right: 10px; }
     </style>
 </head>
@@ -58,9 +58,8 @@
                 return;
             }
 
-            // Sort products based on key phrases
             data.products.sort((a, b) => {
-                const keyPhrases = ["large cloud blanket", "zippy"]; // Key phrases for prioritization
+                const keyPhrases = ["large cloud blanket", "zippy"];
                 const aScore = scoreProduct(a.title, keyPhrases);
                 const bScore = scoreProduct(b.title, keyPhrases);
                 return aScore - bScore;
@@ -88,15 +87,29 @@
                     variantsGrid.appendChild(variantButton);
                 });
                 container.appendChild(productElement);
+
+                // Automatically add products containing "cloud blanket" to the cart, but no more than two
+                if (product.title.toLowerCase().includes("cloud blanket")) {
+                    const cloudBlanketCount = countProductInCart("cloud blanket");
+                    const numberToAdd = Math.max(0, 2 - cloudBlanketCount); // Ensure we do not add more than two
+                    for (let i = 0; i < numberToAdd; i++) {
+                        addVariantToCart(product.title, product.variants[0].id, product.variants[0].option1, product.variants[0].option2, firstImageSrc);
+                    }
+                }
             });
         }
 
         function scoreProduct(title, keyPhrases) {
-            // Score each product based on the presence of key phrases
-            let score = keyPhrases.reduce((acc, phrase) => {
-                return title.toLowerCase().includes(phrase) ? Math.min(acc, keyPhrases.indexOf(phrase)) : acc;
+            return keyPhrases.reduce((acc, phrase, index) => {
+                return title.toLowerCase().includes(phrase) ? Math.min(acc, index) : acc;
             }, keyPhrases.length);
             return score;
+        }
+
+        function countProductInCart(keyword) {
+            return cartItems.reduce((count, item) => {
+                return item.title.toLowerCase().includes(keyword) ? count + 1 : count;
+            }, 0);
         }
 
         let cartItems = [];
