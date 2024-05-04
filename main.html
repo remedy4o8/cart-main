@@ -7,31 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <style>
-        body {
-            background-color: #000; /* Dark background */
-        }
-        #notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: #d291bc; /* Default light purple */
-            color: white;
-            padding: 10px;
-            border-radius: 10px;
-            opacity: 0;
-            transition: opacity 0.5s, background-color 0.5s;
-            z-index: 1000;
-            font-size: 16px;
-        }
-        .notification-red {
-            background-color: #e3342f; /* Red for removal notifications */
-        }
-        .notification-purple {
-            background-color: #d291bc; /* Purple for general notifications */
-        }
-        .fa-cart-plus, .fa-trash-alt {
-            margin-right: 10px;
-        }
+        body{background-color:#000}#notification{position:fixed;top:20px;right:20px;background-color:#d291bc;color:#fff;padding:10px;border-radius:10px;opacity:0;transition:opacity .5s,background-color .5s;z-index:1000;font-size:16px}.notification-red{background-color:#e3342f}.notification-purple{background-color:#d291bc}.fa-cart-plus,.fa-trash-alt{margin-right:10px}
     </style>
 </head>
 <body class="text-white">
@@ -75,7 +51,7 @@
             }
 
             data.products.sort((a, b) => {
-                const keyPhrases = ["dreams large cloud blanket", "zippy"]; // Lowercase phrases for comparison
+                const keyPhrases = ["large cloud blanket", "zippy"]; // Lowercase phrases for comparison
                 const aScore = scoreProduct(a.title, keyPhrases);
                 const bScore = scoreProduct(b.title, keyPhrases);
                 return aScore - bScore;
@@ -116,12 +92,14 @@
 
         function addVariantToCart(title, variantId, size, color, imageUrl) {
             cartItems.push({ title, variantId, size, color, imageUrl });
+            localStorage.setItem('cartItems', JSON.stringify(cartItems)); // Save to local storage
             updateCartList();
             displayNotification('Added', `Added to cart: ${title}`, 'purple');
         }
 
         function removeItemFromCart(index) {
             cartItems.splice(index, 1);
+            localStorage.setItem('cartItems', JSON.stringify(cartItems)); // Update local storage
             updateCartList();
             displayNotification('Removed', 'Item removed from cart.', 'red');
         }
@@ -150,7 +128,7 @@
                 cartUrlDisplay.classList.remove('hidden');
                 const encodedItems = cartItems.map(item => `${item.variantId}:1`).join(',');
                 const cartUrl = `${shopUrl}/cart/${encodedItems}?discount=lsvip`; // Appending discount code
-                // cartUrlDisplay.innerText = cartUrl;
+                // cartUrlDisplay.innerText = cartUrl; // Display cart URL
                 cartLink.onclick = () => window.open(cartUrl, '_blank');
             } else {
                 cartLink.classList.add('hidden');
@@ -172,7 +150,18 @@
             setTimeout(() => notificationElement.style.opacity = 0, 2500);
         }
 
-        document.addEventListener('DOMContentLoaded', () => fetchProducts('https://littlesleepies.com/collections/vip-early-access/products.json'));
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchProducts('https://littlesleepies.com/collections/dolphin-dance/products.json');
+            loadCartFromLocalStorage();
+        });
+
+        function loadCartFromLocalStorage() {
+            const storedCart = localStorage.getItem('cartItems');
+            if (storedCart) {
+                cartItems = JSON.parse(storedCart);
+                updateCartList();
+            }
+        }
     </script>
 </body>
 </html>
