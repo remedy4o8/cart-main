@@ -7,7 +7,14 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <style>
-        body{background-color:#000}#notification{position:fixed;top:20px;right:20px;background-color:#d291bc;color:#fff;padding:10px;border-radius:10px;opacity:0;transition:opacity .5s,background-color .5s;z-index:1000;font-size:16px}.notification-red{background-color:#e3342f}.notification-purple{background-color:#d291bc}.fa-cart-plus,.fa-trash-alt{margin-right:10px}
+        body { background-color: #000; }
+        #notification {
+            position: fixed; top: 20px; right: 20px; background-color: #d291bc; color: #fff; padding: 10px;
+            border-radius: 10px; opacity: 0; transition: opacity 0.5s, background-color 0.5s; z-index: 1000; font-size: 16px;
+        }
+        .notification-red { background-color: #e3342f; }
+        .notification-purple { background-color: #d291bc; }
+        .fa-cart-plus, .fa-trash-alt { margin-right: 10px; }
     </style>
 </head>
 <body class="text-white">
@@ -22,7 +29,7 @@
                 <div class="overflow-y-auto p-4">
                     <h2 class="text-2xl mb-4 text-lime-300">Shopping Cart</h2>
                     <ul id="cartItems" class="space-y-2"></ul>
-                    <button id="cartUrl" class="mt-4 bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded hidden">View Cart</button>
+                    <button id="cartUrl" class="mt-4 bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded hidden" aria-label="View your shopping cart">View Cart</button>
                     <p id="cartUrlDisplay" class="mt-2 text-sm hidden"></p>
                 </div>
             </div>
@@ -31,6 +38,7 @@
     <div id="notification"><i class="fas fa-info-circle"></i> <span id="notificationText"></span></div>
     <script>
         const shopUrl = "https://littlesleepies.com";
+
         async function fetchProducts(url) {
             try {
                 const response = await fetch(url);
@@ -50,8 +58,9 @@
                 return;
             }
 
+            // Sort products based on key phrases
             data.products.sort((a, b) => {
-                const keyPhrases = ["large cloud blanket", "zippy"]; // Lowercase phrases for comparison
+                const keyPhrases = ["large cloud blanket", "zippy"]; // Key phrases for prioritization
                 const aScore = scoreProduct(a.title, keyPhrases);
                 const bScore = scoreProduct(b.title, keyPhrases);
                 return aScore - bScore;
@@ -63,7 +72,7 @@
                 const firstImageSrc = product.images[0] ? product.images[0].src : 'placeholder.jpg';
                 productElement.innerHTML = `
                     <div class="bg-gray-800 rounded overflow-hidden shadow-lg">
-                        <img class="w-full h-48 object-cover" src="${firstImageSrc}" alt="${product.title}">
+                        <img class="w-full h-48 object-cover" src="${firstImageSrc}" alt="${product.title}" loading="lazy">
                         <div class="p-4">
                             <div class="font-bold text-xl mb-2">${product.title} $${product.variants[0].price}</div>
                             <div class="flex flex-wrap gap-2"></div>
@@ -74,6 +83,7 @@
                     const variantButton = document.createElement('button');
                     variantButton.className = 'bg-pink-500 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded';
                     variantButton.textContent = variant.option1;
+                    variantButton.setAttribute('aria-label', `Add ${product.title}, Size ${variant.option1} to cart`);
                     variantButton.onclick = () => addVariantToCart(product.title, variant.id, variant.option1, variant.option2, firstImageSrc);
                     variantsGrid.appendChild(variantButton);
                 });
@@ -82,8 +92,9 @@
         }
 
         function scoreProduct(title, keyPhrases) {
-            let score = keyPhrases.reduce((acc, phrase, index) => {
-                return title.toLowerCase().includes(phrase) ? Math.min(acc, index) : acc;
+            // Score each product based on the presence of key phrases
+            let score = keyPhrases.reduce((acc, phrase) => {
+                return title.toLowerCase().includes(phrase) ? Math.min(acc, keyPhrases.indexOf(phrase)) : acc;
             }, keyPhrases.length);
             return score;
         }
@@ -109,13 +120,13 @@
             cartList.innerHTML = cartItems.map((item, index) => `
                 <li class="bg-gray-800 p-2 rounded flex justify-between items-center">
                     <div class="flex items-center">
-                        <img src="${item.imageUrl}" class="w-10 h-10 rounded-full" alt="Product">
+                        <img src="${item.imageUrl}" class="w-10 h-10 rounded-full" alt="Product" loading="lazy">
                         <div class="ml-4">
                             <p class="text-sm font-medium">${item.title}</p>
                             <p class="text-xs text-gray-400">Size: ${item.size}</p>
                         </div>
                     </div>
-                    <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" onclick="removeItemFromCart(${index})">Remove</button>
+                    <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" aria-label="Remove ${item.title} from cart" onclick="removeItemFromCart(${index})">Remove</button>
                 </li>`).join('');
             toggleCartVisibility();
         }
@@ -151,7 +162,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            fetchProducts('https://littlesleepies.com/collections/vip-early-access/products.json');
+            fetchProducts('https://littlesleepies.com/collections/dolphin-dance/products.json');
             loadCartFromLocalStorage();
         });
 
