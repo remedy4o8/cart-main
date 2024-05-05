@@ -22,7 +22,7 @@
         <div class="flex flex-wrap">
             <div class="w-full md:w-2/3">
                 <h1 class="text-3xl mb-4 text-teal-400">Let the Shopping Begin!</h1>
-                <p class="mb-4">Welcome to your go-to spot for snagging the latest Little Sleepies! Whether we get a sneak peek of the products early or right on time, you’ll find them here. Start to refresh this page about 15-30 seconds before 8:55 PST to catch all the cuteness in one place.</p>
+                <p class="mb-4">Welcome to your go-to spot for snagging the latest Little Sleepies! Whether we get a sneak peek of the products early or right on time, you’ll find them here. No need to refresh multiple pages—just start here about 15-30 seconds before 8:55AM PST or 11:55AM EST to catch all the cuteness in one place.</p>
                 <p class="mb-4">Pick your favorites, select the perfect sizes, and pop them into your cart. When you’re ready, hit 'View Cart' to zip over to the store's website where your chosen items are waiting to be yours.</p>
                 <p class="mb-4">P.S. Blankets are so snuggly and popular, we’ve gone ahead and tucked two into your cart to start. Happy shopping, Mom’s!</p>
                 <div id="products" class="flex flex-wrap justify-start items-stretch gap-4"></div>
@@ -47,6 +47,7 @@
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 const data = await response.json();
                 displayProducts(data);
+                autoAddBlankets(data);
             } catch (error) {
                 console.error('Error fetching data:', error);
                 document.getElementById('products').innerHTML = `<div class="text-red-500 p-4">Error fetching products: ${error.message}</div>`;
@@ -85,17 +86,20 @@
                     variantButton.className = 'bg-pink-500 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded';
                     variantButton.textContent = variant.option1;
                     variantButton.setAttribute('aria-label', `Add ${product.title}, Size ${variant.option1} to cart`);
-                    variantButton.onclick = () => addVariantToCart(product.title, variant.id, variant.option1, variant.option2, firstImageSrc);
+                    variantButton.onclick = () => attemptAddVariantToCart(product.title, variant.id, variant.option1, variant.option2, firstImageSrc);
                     variantsGrid.appendChild(variantButton);
                 });
                 container.appendChild(productElement);
+            });
+        }
 
-                // Automatically add products containing "cloud blanket" to the cart, but no more than two
+        function autoAddBlankets(data) {
+            data.products.forEach(product => {
                 if (product.title.toLowerCase().includes("cloud blanket")) {
                     const cloudBlanketCount = countProductInCart("cloud blanket");
-                    const numberToAdd = Math.max(0, 2 - cloudBlanketCount); // Ensure we do not add more than two
+                    const numberToAdd = 2 - cloudBlanketCount; // Ensure we add up to two
                     for (let i = 0; i < numberToAdd; i++) {
-                        addVariantToCart(product.title, product.variants[0].id, product.variants[0].option1, product.variants[0].option2, firstImageSrc);
+                        attemptAddVariantToCart(product.title, product.variants[0].id, product.variants[0].option1, product.variants[0].option2, product.images[0].src);
                     }
                 }
             });
@@ -105,16 +109,16 @@
             return keyPhrases.reduce((acc, phrase, index) => {
                 return title.toLowerCase().includes(phrase) ? Math.min(acc, index) : acc;
             }, keyPhrases.length);
-            return score;
         }
 
-        function countProductInCart(keyword) {
-            return cartItems.reduce((count, item) => {
-                return item.title.toLowerCase().includes(keyword) ? count + 1 : count;
-            }, 0);
+        function attemptAddVariantToCart(title, variantId, size, color, imageUrl) {
+            const cloudBlanketCount = countProductInCart("cloud blanket");
+            if (title.toLowerCase().includes("cloud blanket") && cloudBlanketCount >= 2) {
+                displayNotification('Limit Reached', `You can only have two cloud blankets in your cart.`, 'red');
+                return; // Stop if there are already two blankets in the cart
+            }
+            addVariantToCart(title, variantId, size, color, imageUrl);
         }
-
-        let cartItems = [];
 
         function addVariantToCart(title, variantId, size, color, imageUrl) {
             cartItems.push({ title, variantId, size, color, imageUrl });
@@ -128,6 +132,12 @@
             localStorage.setItem('cartItems', JSON.stringify(cartItems)); // Update local storage
             updateCartList();
             displayNotification('Removed', 'Item removed from cart.', 'red');
+        }
+
+        function countProductInCart(keyword) {
+            return cartItems.reduce((count, item) => {
+                return item.title.toLowerCase().includes(keyword) ? count + 1 : count;
+            }, 0);
         }
 
         function updateCartList() {
