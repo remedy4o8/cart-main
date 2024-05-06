@@ -98,8 +98,8 @@
             data.products.forEach(product => {
                 // Convert the title to lower case and check for each keyword
                 const titleLower = product.title.toLowerCase();
-                if (containsAllKeywords(titleLower, ["dolphin ","cloud", "blanket"])) {
-                    const cloudBlanketCount = countProductInCart("dolpin cloud blanket");
+                if (containsAllKeywords(titleLower, ["pasta ","cloud", "blanket"])) {
+                    const cloudBlanketCount = countProductInCart("pasta cloud blanket");
                     const numberToAdd = 2 - cloudBlanketCount; // Ensure we add up to two
                     for (let i = 0; i < numberToAdd; i++) {
                         attemptAddVariantToCart(product.title, product.variants[0].id, product.variants[0].option1, product.variants[0].option2, product.images[0].src);
@@ -107,7 +107,7 @@
                 }
             });
         }
-
+        
         function containsAllKeywords(text, keywords) {
             return keywords.every(keyword => text.includes(keyword));
         }
@@ -195,7 +195,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            fetchProducts('https://littlesleepies.com/collections/dolphin-dance/products.json');
+            fetchProducts('https://littlesleepies.com/collections/blankets/products.json');
             loadCartFromLocalStorage();
         });
 
