@@ -91,7 +91,7 @@
             data.products.forEach(product => {
                 const titleLower = product.title.toLowerCase();
                 if (containsAllKeywords(titleLower, ["simba", "cloud", "blanket"])) {
-                    const cloudBlanketCount = countProductInCart("pastel cloud blanket");
+                    const cloudBlanketCount = countProductInCart("simba cloud blanket");
                     const numberToAdd = 2 - cloudBlanketCount; // Ensure we add up to two
                     for (let i = 0; i < numberToAdd; i++) {
                         addVariantToCart(product.title, product.variants[0].id, product.variants[0].option1, product.variants[0].option2, product.images[0].src);
