@@ -62,7 +62,7 @@
             }
 
             data.products.sort((a, b) => {
-                const keyPhrases = ["large cloud blanket", "zippy"];
+                const keyPhrases = ["cloud blanket", "zippy"];
                 const aScore = scoreProduct(a.title, keyPhrases);
                 const bScore = scoreProduct(b.title, keyPhrases);
                 return aScore - bScore;
@@ -92,11 +92,14 @@
                 container.appendChild(productElement);
             });
         }
-
+        
+        // Add Blanket Keywords
         function autoAddBlankets(data) {
             data.products.forEach(product => {
-                if (product.title.toLowerCase().includes("cloud blanket")) {
-                    const cloudBlanketCount = countProductInCart("cloud blanket");
+                // Convert the title to lower case and check for each keyword
+                const titleLower = product.title.toLowerCase();
+                if (containsAllKeywords(titleLower, ["dolphin ","cloud", "blanket"])) {
+                    const cloudBlanketCount = countProductInCart("dolpin cloud blanket");
                     const numberToAdd = 2 - cloudBlanketCount; // Ensure we add up to two
                     for (let i = 0; i < numberToAdd; i++) {
                         attemptAddVariantToCart(product.title, product.variants[0].id, product.variants[0].option1, product.variants[0].option2, product.images[0].src);
@@ -104,6 +107,11 @@
                 }
             });
         }
+
+        function containsAllKeywords(text, keywords) {
+            return keywords.every(keyword => text.includes(keyword));
+        }
+
 
         function scoreProduct(title, keyPhrases) {
             return keyPhrases.reduce((acc, phrase, index) => {
