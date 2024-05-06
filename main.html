@@ -31,7 +31,7 @@
                 <div class="overflow-y-auto p-4">
                     <h2 class="text-2xl mb-4 text-lime-300">Shopping Cart</h2>
                     <ul id="cartItems" class="space-y-2"></ul>
-                    <button id="cartUrl" class="mt-4 bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded hidden" aria-label="View your shopping cart">View Cart</button>
+                    <button id="cartUrl" class="mt-4 bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded hidden">View Cart</button>
                     <p id="cartUrlDisplay" class="mt-2 text-sm hidden"></p>
                 </div>
             </div>
@@ -40,6 +40,7 @@
     <div id="notification"><i class="fas fa-info-circle"></i> <span id="notificationText"></span></div>
     <script>
         const shopUrl = "https://littlesleepies.com";
+        let cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
 
         async function fetchProducts(url) {
             try {
@@ -84,7 +85,7 @@
                 product.variants.forEach(variant => {
                     const variantButton = document.createElement('button');
                     variantButton.className = 'bg-pink-500 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded';
-                    variantButton.textContent = variant.option1;
+                    variantButton.textContent = `${variant.option1} - Size ${variant.option2}`;
                     variantButton.setAttribute('aria-label', `Add ${product.title}, Size ${variant.option1} to cart`);
                     variantButton.onclick = () => attemptAddVariantToCart(product.title, variant.id, variant.option1, variant.option2, firstImageSrc);
                     variantsGrid.appendChild(variantButton);
@@ -92,26 +93,21 @@
                 container.appendChild(productElement);
             });
         }
-        
-        // Add Blanket Keywords
+
         function autoAddBlankets(data) {
             data.products.forEach(product => {
-                // Convert the title to lower case and check for each keyword
                 const titleLower = product.title.toLowerCase();
-                if (containsAllKeywords(titleLower, ["pasta ","cloud", "blanket"])) {
-                    const cloudBlanketCount = countProductInCart("pasta cloud blanket");
-                    const numberToAdd = 2 - cloudBlanketCount; // Ensure we add up to two
+                if (titleLower.includes("cloud blanket")) {
+                    const blanketCount = countProductInCart("cloud blanket");
+                    const numberToAdd = 2 - blanketCount;
                     for (let i = 0; i < numberToAdd; i++) {
-                        attemptAddVariantToCart(product.title, product.variants[0].id, product.variants[0].option1, product.variants[0].option2, product.images[0].src);
+                        if (product.variants.length > 0) {
+                            attemptAddVariantToCart(product.title, product.variants[0].id, product.variants[0].option1, product.variants[0].option2, product.images[0].src);
+                        }
                     }
                 }
             });
         }
-        
-        function containsAllKeywords(text, keywords) {
-            return keywords.every(keyword => text.includes(keyword));
-        }
-
 
         function scoreProduct(title, keyPhrases) {
             return keyPhrases.reduce((acc, phrase, index) => {
@@ -120,32 +116,27 @@
         }
 
         function attemptAddVariantToCart(title, variantId, size, color, imageUrl) {
-            const cloudBlanketCount = countProductInCart("cloud blanket");
-            if (title.toLowerCase().includes("cloud blanket") && cloudBlanketCount >= 2) {
-                displayNotification('Limit Reached', `You can only have two cloud blankets in your cart.`, 'red');
-                return; // Stop if there are already two blankets in the cart
+            if (!cartItems.some(item => item.variantId === variantId)) {
+                addVariantToCart(title, variantId, size, color, imageUrl);
             }
-            addVariantToCart(title, variantId, size, color, imageUrl);
         }
 
         function addVariantToCart(title, variantId, size, color, imageUrl) {
             cartItems.push({ title, variantId, size, color, imageUrl });
-            localStorage.setItem('cartItems', JSON.stringify(cartItems)); // Save to local storage
+            localStorage.setItem('cartItems', JSON.stringify(cartItems));
             updateCartList();
             displayNotification('Added', `Added to cart: ${title}`, 'purple');
         }
 
         function removeItemFromCart(index) {
             cartItems.splice(index, 1);
-            localStorage.setItem('cartItems', JSON.stringify(cartItems)); // Update local storage
+            localStorage.setItem('cartItems', JSON.stringify(cartItems));
             updateCartList();
             displayNotification('Removed', 'Item removed from cart.', 'red');
         }
 
-        function countProductInCart(keyword) {
-            return cartItems.reduce((count, item) => {
-                return item.title.toLowerCase().includes(keyword) ? count + 1 : count;
-            }, 0);
+        function countProductInCart(identifier) {
+            return cartItems.reduce((count, item) => item.title.includes(identifier) ? count + 1 : count, 0);
         }
 
         function updateCartList() {
@@ -156,7 +147,7 @@
                         <img src="${item.imageUrl}" class="w-10 h-10 rounded-full" alt="Product" loading="lazy">
                         <div class="ml-4">
                             <p class="text-sm font-medium">${item.title}</p>
-                            <p class="text-xs text-gray-400">Size: ${item.size}</p>
+                            <p class="text-xs text-gray-400">Size: ${item.size}, Color: ${item.color}</p>
                         </div>
                     </div>
                     <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" aria-label="Remove ${item.title} from cart" onclick="removeItemFromCart(${index})">Remove</button>
@@ -171,8 +162,8 @@
                 cartLink.classList.remove('hidden');
                 cartUrlDisplay.classList.remove('hidden');
                 const encodedItems = cartItems.map(item => `${item.variantId}:1`).join(',');
-                const cartUrl = `${shopUrl}/cart/${encodedItems}?discount=lsvip`; // Appending discount code
-                // cartUrlDisplay.innerText = cartUrl; // Display cart URL
+                const cartUrl = `${shopUrl}/cart/${encodedItems}?discount=lsvip`;
+                cartUrlDisplay.innerText = cartUrl; // Display cart URL
                 cartLink.onclick = () => window.open(cartUrl, '_blank');
             } else {
                 cartLink.classList.add('hidden');
@@ -188,14 +179,14 @@
                 notificationElement.classList.add('notification-red');
                 notificationElement.classList.remove('notification-purple');
             } else {
-                notificationElement.classList.add('notification-purple');
-                notificationElement.classList.remove('notification-red');
+                notificationElement.classList add('notification-purple');
+                notificationElement.classList remove('notification-red');
             }
             setTimeout(() => notificationElement.style.opacity = 0, 2500);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            fetchProducts('https://littlesleepies.com/collections/blankets/products.json');
+            fetchProducts('https://littlesleepies.com/collections/dolphin-dance/products.json');
             loadCartFromLocalStorage();
         });
 
