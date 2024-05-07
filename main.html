@@ -62,6 +62,13 @@
                 return;
             }
 
+            data.products.sort((a, b) => {
+                const keyPhrases = ["cloud blanket", "zippy"];
+                const aScore = scoreProduct(a.title, keyPhrases);
+                const bScore = scoreProduct(b.title, keyPhrases);
+                return aScore - bScore;
+            });
+
             data.products.forEach(product => {
                 const productElement = document.createElement('div');
                 productElement.className = 'w-full sm:w-1/2 md:w-1/4 p-4';
@@ -102,6 +109,12 @@
 
         function containsAllKeywords(text, keywords) {
             return keywords.every(keyword => text.includes(keyword));
+        }
+
+        function scoreProduct(title, keyPhrases) {
+            return keyPhrases.reduce((acc, phrase, index) => {
+                return title.toLowerCase().includes(phrase) ? Math.min(acc, index) : acc;
+            }, keyPhrases.length);
         }
 
         function addVariantToCart(title, variantId, size, color, imageUrl) {
