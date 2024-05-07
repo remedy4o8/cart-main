@@ -85,7 +85,7 @@
                 product.variants.forEach(variant => {
                     const variantButton = document.createElement('button');
                     variantButton.className = 'bg-pink-500 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded';
-                    variantButton.textContent = `${variant.option1}';
+                    variantButton.textContent = `${variant.option1}`;
                     variantButton.setAttribute('aria-label', `Add ${product.title}, Size ${variant.option1} to cart`);
                     variantButton.onclick = () => addVariantToCart(product.title, variant.id, variant.option1, variant.option2, firstImageSrc);
                     variantsGrid.appendChild(variantButton);
