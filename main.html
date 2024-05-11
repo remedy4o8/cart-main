@@ -259,6 +259,28 @@
         updateCartList();
       }
     }
+  
+    // Function to refresh the page
+    function refreshPage() {
+      location.reload();
+    }
+
+    // Calculate the time until 8:55 AM PST
+    function timeUntilRefresh() {
+      const now = new Date();
+      const targetTime = new Date(now);
+      targetTime.setUTCHours(15, 55, 0, 0); // Set target time to 8:55 AM PST (UTC-8)
+      // Convert target time to local time
+      const userOffset = now.getTimezoneOffset() / 60; // Get user's time zone offset in hours
+      targetTime.setHours(targetTime.getHours() - userOffset); // Adjust target time to user's local time
+      if (now > targetTime) { // If it's past 8:55 AM PST today, set target time to tomorrow
+        targetTime.setDate(targetTime.getDate() + 1);
+      }
+      return targetTime.getTime() - now.getTime();
+    }
+
+    // Schedule the page refresh
+    setTimeout(refreshPage, timeUntilRefresh());  
   </script>
 </body>
 </html>
