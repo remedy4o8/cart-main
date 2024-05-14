@@ -241,24 +241,12 @@
       }
       setTimeout(() => notificationElement.style.opacity = 0, 2500);
     }
+    
     document.addEventListener('DOMContentLoaded', () => {
-      fetchProducts('https://littlesleepies.com/collections/vip-early-access/products.json');
+      fetchProducts();
       loadCartFromLocalStorage();
+      document.getElementById('clearCart').addEventListener('click', clearCart);
     });
-    
-    document.addEventListener('DOMContentLoaded', () => {
-          fetchProducts();
-          loadCartFromLocalStorage();
-          document.getElementById('clearCart').addEventListener('click', clearCart);
-      });
-    
-    function loadCartFromLocalStorage() {
-      const storedCart = localStorage.getItem('cartItems');
-      if (storedCart) {
-        cartItems = JSON.parse(storedCart);
-        updateCartList();
-      }
-    }
   
     // Function to refresh the page
     function refreshPage() {
