@@ -8,32 +8,32 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
   <style>
     body {
-    background-color: #000;
+      background-color: #000;
     }
     #notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background-color: #d291bc;
-    color: #fff;
-    padding: 10px;
-    border-radius: 10px;
-    opacity: 0;
-    transition: opacity 0.5s, background-color 0.5s;
-    z-index: 1000;
-    font-size: 16px;
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: #d291bc;
+      color: #fff;
+      padding: 10px;
+      border-radius: 10px;
+      opacity: 0;
+      transition: opacity 0.5s, background-color 0.5s;
+      z-index: 1000;
+      font-size: 16px;
     }
     .notification-red {
-    background-color: #e3342f;
-    color: #ffffff;
+      background-color: #e3342f;
+      color: #ffffff;
     }
     .notification-purple {
-    background-color: #d291bc;
-    color: #ffffff;
+      background-color: #d291bc;
+      color: #ffffff;
     }
     .fa-cart-plus,
     .fa-trash-alt {
-    margin-right: 10px;
+      margin-right: 10px;
     }
   </style>
 </head>
@@ -68,7 +68,9 @@
     let cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
     let currentPage = 1;
     const maxPages = 3; // Only fetch up to 3 pages
+
     async function fetchProducts() {
+      console.log(`Fetching products from page ${currentPage}`);
       if (currentPage > maxPages) {
         console.log('Reached maximum page limit.');
         return; // Stop fetching when the maximum page count is reached
@@ -78,7 +80,9 @@
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const data = await response.json();
+        console.log(`Fetched data: ${JSON.stringify(data)}`);
         if (data.products && data.products.length > 0) {
+          console.log(`Fetched ${data.products.length} products`);
           displayProducts(data);
           autoAddBlankets(data);
           currentPage++; // Increment the page number
@@ -87,35 +91,36 @@
       } catch (error) {
         console.error('Error fetching data:', error);
         document.getElementById('products').innerHTML = `
-    	<div class="text-red-500 p-4">Error fetching products: ${error.message}</div>`;
+          <div class="text-red-500 p-4">Error fetching products: ${error.message}</div>`;
       }
     }
-    
+
     function displayProducts(data) {
+      console.log('Displaying products');
       const container = document.getElementById('products');
       if (!data.products || data.products.length === 0) {
-        container.innerHTML = ' < div class = "p-4" > No Products Found. < /div>';
+        container.innerHTML = '<div class="p-4">No Products Found.</div>';
         return;
       }
-      data.products.sort((a, b, c) => {
+      data.products.sort((a, b) => {
         const keyPhrases = ["cloud blanket", "zippy"];
         const aScore = scoreProduct(a.title, keyPhrases);
         const bScore = scoreProduct(b.title, keyPhrases);
         return aScore - bScore;
       });
       data.products.forEach(product => {
+        console.log(`Displaying product: ${product.title}`);
         const productElement = document.createElement('div');
         productElement.className = 'w-full sm:w-1/2 md:w-1/4 p-4';
         const firstImageSrc = product.images[0] ? product.images[0].src : 'placeholder.jpg';
         productElement.innerHTML = `
-                  
-    	<div class="bg-gray-800 rounded overflow-hidden shadow-lg">
-    		<img class="w-full h-48 object-cover" src="${firstImageSrc}" alt="${product.title}" loading="lazy">
-    			<div class="p-4">
-    				<div class="font-bold text-xl mb-2">${product.title} $${product.variants[0].price}</div>
-    				<div class="flex flex-wrap gap-2"></div>
-    			</div>
-    		</div>`;
+          <div class="bg-gray-800 rounded overflow-hidden shadow-lg">
+            <img class="w-full h-48 object-cover" src="${firstImageSrc}" alt="${product.title}" loading="lazy">
+            <div class="p-4">
+              <div class="font-bold text-xl mb-2">${product.title} $${product.variants[0].price}</div>
+              <div class="flex flex-wrap gap-2"></div>
+            </div>
+          </div>`;
         const variantsGrid = productElement.querySelector('.flex-wrap');
         product.variants.forEach(variant => {
           const variantButton = document.createElement('button');
@@ -128,34 +133,38 @@
         container.appendChild(productElement);
       });
     }
-    
-     //add blanket keywords 
+
     function autoAddBlankets(data) {
+      console.log('Auto-adding blankets');
       data.products.forEach(product => {
         const titleLower = product.title.toLowerCase();
-        if (containsAllKeywords(titleLower, ["","cloud","blanket"])) {
+        if (containsAllKeywords(titleLower, ["cloud", "blanket"])) {
           const cloudBlanketCount = countProductInCart("cloud blanket");
           const numberToAdd = Math.max(0, 2 - cloudBlanketCount); // Ensure we add up to two
           for (let i = 0; i < numberToAdd; i++) {
             if (product.variants && product.variants.length > 0 && product.images && product.images.length > 0) {
+              console.log(`Auto-adding blanket: ${product.title}`);
               addVariantToCart(product.title, product.variants[0].id, product.variants[0].option1, product.variants[0].option2, product.images[0].src);
             }
           }
         }
       });
     }
-    
+
     function containsAllKeywords(text, keywords) {
+      console.log(`Checking if "${text}" contains all keywords: ${keywords.join(', ')}`);
       return keywords.every(keyword => text.includes(keyword));
     }
-    
+
     function scoreProduct(title, keyPhrases) {
+      console.log(`Scoring product: ${title}`);
       return keyPhrases.reduce((acc, phrase, index) => {
         return title.toLowerCase().includes(phrase) ? Math.min(acc, index) : acc;
       }, keyPhrases.length);
     }
-    
+
     function addVariantToCart(title, variantId, size, color, imageUrl) {
+      console.log(`Adding variant to cart: ${title}, Size: ${size}, Color: ${color}`);
       // Check if the product is a blanket and count how many are already in the cart
       if (title.toLowerCase().includes("cloud blanket")) {
         const blanketCount = countProductInCart("cloud blanket");
@@ -176,43 +185,47 @@
       updateCartList();
       displayNotification('Added', `Added to cart: ${title}`, 'purple');
     }
-    
+
     function removeItemFromCart(index) {
+      console.log(`Removing item from cart at index ${index}`);
       cartItems.splice(index, 1);
       localStorage.setItem('cartItems', JSON.stringify(cartItems)); // Update local storage
       updateCartList();
       displayNotification('Removed', 'Item removed from cart.', 'red');
     }
-    
+
     function countProductInCart(identifier) {
+      console.log(`Counting products in cart with identifier: ${identifier}`);
       return cartItems.reduce((count, item) => item.title.toLowerCase().includes(identifier.toLowerCase()) ? count + 1 : count, 0);
     }
-    
+
     function clearCart() {
-          cartItems = [];
-          localStorage.setItem('cartItems', JSON.stringify(cartItems));
-          updateCartList();
-          displayNotification('Cleared', 'All items have been removed from the cart.', 'red');
-      }
-    
+      console.log('Clearing cart');
+      cartItems = [];
+      localStorage.setItem('cartItems', JSON.stringify(cartItems));
+      updateCartList();
+      displayNotification('Cleared', 'All items have been removed from the cart.', 'red');
+    }
+
     function updateCartList() {
+      console.log('Updating cart list');
       const cartList = document.getElementById('cartItems');
       cartList.innerHTML = cartItems.map((item, index) => `
-              
-    		<li class="bg-gray-800 p-2 rounded flex justify-between items-center">
-    			<div class="flex items-center">
-    				<img src="${item.imageUrl}" class="w-10 h-10 rounded-full" alt="Product" loading="lazy">
-    					<div class="ml-4">
-    						<p class="text-sm font-medium">${item.title}</p>
-    						<p class="text-xs text-gray-400">Size: ${item.size}</p>
-    					</div>
-    				</div>
-    				<button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" aria-label="Remove ${item.title} from cart" onclick="removeItemFromCart(${index})">Remove</button>
-    			</li>`).join('');
+        <li class="bg-gray-800 p-2 rounded flex justify-between items-center">
+          <div class="flex items-center">
+            <img src="${item.imageUrl}" class="w-10 h-10 rounded-full" alt="Product" loading="lazy">
+            <div class="ml-4">
+              <p class="text-sm font-medium">${item.title}</p>
+              <p class="text-xs text-gray-400">Size: ${item.size}</p>
+            </div>
+          </div>
+          <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" aria-label="Remove ${item.title} from cart" onclick="removeItemFromCart(${index})">Remove</button>
+        </li>`).join('');
       toggleCartVisibility();
     }
-    
+
     function toggleCartVisibility() {
+      console.log('Toggling cart visibility');
       const cartLink = document.getElementById('cartUrl');
       const cartUrlDisplay = document.getElementById('cartUrlDisplay');
       if (cartItems.length > 0) {
@@ -227,8 +240,9 @@
         cartUrlDisplay.classList.add('hidden');
       }
     }
-    
+
     function displayNotification(action, message, color) {
+      console.log(`Displaying notification: ${message}, Color: ${color}`);
       const notificationElement = document.getElementById('notification');
       notificationElement.style.opacity = 1;
       document.getElementById('notificationText').innerText = message;
@@ -241,20 +255,23 @@
       }
       setTimeout(() => notificationElement.style.opacity = 0, 2500);
     }
-    
+
     document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM content loaded');
       fetchProducts();
-      //loadCartFromLocalStorage();
+      updateCartList(); // Ensure cart items are loaded and displayed on page load
       document.getElementById('clearCart').addEventListener('click', clearCart);
     });
-  
+
     // Function to refresh the page
     function refreshPage() {
+      console.log('Refreshing page');
       location.reload();
     }
 
     // Calculate the time until 8:55 AM PST
     function timeUntilRefresh() {
+      console.log('Calculating time until refresh');
       const now = new Date();
       const targetTime = new Date(now);
       targetTime.setUTCHours(15, 55, 0, 0); // Set target time to 8:55 AM PST (UTC-8)
@@ -268,7 +285,7 @@
     }
 
     // Schedule the page refresh
-    setTimeout(refreshPage, timeUntilRefresh());  
+    setTimeout(refreshPage, timeUntilRefresh());
   </script>
 </body>
 </html>
