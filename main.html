@@ -75,7 +75,7 @@
         console.log('Reached maximum page limit.');
         return; // Stop fetching when the maximum page count is reached
       }
-      const url = `hhttps://littlesleepies.com/collections/vip-early-access/products.json?page=${currentPage}`;
+      const url = `https://littlesleepies.com/collections/vip-early-access/products.json?page=${currentPage}`;
       try {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
