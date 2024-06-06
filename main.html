@@ -64,7 +64,7 @@
     <span id="notificationText"></span>
   </div>
   <script>
-    const shopUrl = "https://poshpeanut.com";
+    const shopUrl = "https://littlesleepies.com";
     let cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
     let currentPage = 1;
     const maxPages = 3; // Only fetch up to 3 pages
@@ -75,7 +75,7 @@
         console.log('Reached maximum page limit.');
         return; // Stop fetching when the maximum page count is reached
       }
-      const url = `https://poshpeanut.com/collections/vip-shop-early/products.json?page=${currentPage}`;
+      const url = `hhttps://littlesleepies.com/collections/vip-early-access/products.json?page=${currentPage}`;
       try {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
