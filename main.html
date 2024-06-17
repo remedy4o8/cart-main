@@ -67,7 +67,7 @@
     const shopUrl = "https://littlesleepies.com";
     let cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
     let currentPage = 1;
-    const maxPages = 3; // Only fetch up to 3 pages
+    const maxPages = 5; // Only fetch up to 5 pages
 
     async function fetchProducts() {
       console.log(`Fetching products from page ${currentPage}`);
@@ -103,7 +103,7 @@
         return;
       }
       data.products.sort((a, b) => {
-        const keyPhrases = ["cloud blanket", "zippy"];
+        const keyPhrases = ["cloud blanket","two-piece short sleeve","zippy"];
         const aScore = scoreProduct(a.title, keyPhrases);
         const bScore = scoreProduct(b.title, keyPhrases);
         return aScore - bScore;
