@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,13 +9,15 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
   <style>
     body {
-      background-color: #000;
+      background-color: #1a1a2e;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
     }
+
     #notification {
       position: fixed;
       top: 20px;
       right: 20px;
-      background-color: #d291bc;
+      background-color: #f8bbd0;
       color: #fff;
       padding: 10px;
       border-radius: 10px;
@@ -23,36 +26,55 @@
       z-index: 1000;
       font-size: 16px;
     }
+
     .notification-red {
       background-color: #e3342f;
       color: #ffffff;
     }
+
     .notification-purple {
       background-color: #d291bc;
       color: #ffffff;
     }
+
     .fa-cart-plus,
     .fa-trash-alt {
       margin-right: 10px;
     }
+
+    .rounded-lg {
+      border-radius: 1rem;
+    }
+
+    .shadow-pink {
+      box-shadow: 0 4px 6px rgba(240, 98, 146, 0.3);
+    }
+
+    .shadow-pink-dark {
+      box-shadow: 0 4px 6px rgba(240, 98, 146, 0.5);
+    }
   </style>
 </head>
 
-<body class="text-white">
+<body class="text-gray-200">
   <div class="container mx-auto p-4">
     <div class="flex flex-wrap">
       <div class="w-full md:w-2/3">
-        <h1 class="text-3xl mb-4 text-teal-400">Let the Shopping Begin!</h1>
-        <p class="mb-4">Welcome to your go-to spot for snagging the latest Little Sleepies! Whether we get a sneak peek of the products early or right on time, you’ll find them here. No need to refresh multiple pages—start here about 15-30 seconds before 8:55AM PST or 11:55AM EST to catch all the cuteness in one place.</p>
+        <h1 class="text-3xl mb-4 text-pink-400">Let the Shopping Begin!</h1>
+        <p class="mb-4">Welcome to your go-to spot for snagging the latest Little Sleepies! Whether we get a sneak peek of the products early or right on time, you’ll find them here. No need to refresh multiple pages—start here about 15-30 seconds before 8:55 AM PST or 11:55 AM EST to catch all the cuteness in one place.</p>
         <p class="mb-4">Pick your favorites, select the perfect sizes, and pop them into your cart. When you’re ready, hit 'View Cart' to zip over to the store's website, where your chosen items are waiting to be yours.</p>
         <p class="mb-4">P.S. Blankets are so snuggly and popular that we’ve gone ahead and tucked two into your cart to start. Happy shopping, Mom’s!</p>
         <div id="products" class="flex flex-wrap justify-start items-stretch gap-4"></div>
       </div>
       <div class="w-full md:w-1/3 sticky top-0" style="height: calc(100vh - 1rem);">
-        <div class="overflow-y-auto p-4">
-          <h2 class="text-2xl mb-4 text-lime-300">Shopping Cart</h2>
+        <div class="overflow-y-auto p-4 rounded-lg bg-gray-800 shadow-pink">
+          <h2 class="text-2xl mb-4 text-pink-400">Shopping Cart</h2>
           <ul id="cartItems" class="space-y-2"></ul>
-          <button id="cartUrl" class="mt-4 bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded hidden">View Cart</button>
+          <div class="mt-4">
+            <input type="checkbox" id="autoCheckout" class="mr-2">
+            <label for="autoCheckout" class="text-pink-500">Auto Checkout Two Cloud Blankets Only</label>
+          </div>
+          <button id="cartUrl" class="mt-4 bg-pink-500 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded hidden">View Cart</button>
           <button id="clearCart" class="mt-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Clear Cart</button>
           <p id="cartUrlDisplay" class="mt-2 text-sm hidden"></p>
         </div>
@@ -103,7 +125,7 @@
         return;
       }
       data.products.sort((a, b) => {
-        const keyPhrases = ["cloud blanket","two-piece short sleeve","zippy"];
+        const keyPhrases = ["cloud blanket", "two-piece short sleeve", "zippy"];
         const aScore = scoreProduct(a.title, keyPhrases);
         const bScore = scoreProduct(b.title, keyPhrases);
         return aScore - bScore;
@@ -114,10 +136,10 @@
         productElement.className = 'w-full sm:w-1/2 md:w-1/4 p-4';
         const firstImageSrc = product.images[0] ? product.images[0].src : 'placeholder.jpg';
         productElement.innerHTML = `
-          <div class="bg-gray-800 rounded overflow-hidden shadow-lg">
+          <div class="bg-gray-700 rounded-lg overflow-hidden shadow-pink-dark">
             <img class="w-full h-48 object-cover" src="${firstImageSrc}" alt="${product.title}" loading="lazy">
             <div class="p-4">
-              <div class="font-bold text-xl mb-2">${product.title} $${product.variants[0].price}</div>
+              <div class="font-bold text-xl mb-2 text-pink-400">${product.title} $${product.variants[0].price}</div>
               <div class="flex flex-wrap gap-2"></div>
             </div>
           </div>`;
@@ -184,6 +206,23 @@
       localStorage.setItem('cartItems', JSON.stringify(cartItems)); // Save to local storage
       updateCartList();
       displayNotification('Added', `Added to cart: ${title}`, 'purple');
+
+      // Check auto-checkout condition
+      const autoCheckout = localStorage.getItem('autoCheckout') === 'true';
+      const cloudBlanketCount = countProductInCart("cloud blanket");
+      if (autoCheckout && cloudBlanketCount >= 2) {
+        proceedToCheckout();
+      }
+    }
+
+    function proceedToCheckout() {
+      const encodedItems = cartItems.map(item => `${item.variantId}:1`).join(',');
+      const cartUrl = `${shopUrl}/cart/${encodedItems}?discount=lsvip`;
+      window.open(cartUrl, '_blank');
+      // Clear the cart to prevent double checkout
+      cartItems = [];
+      localStorage.setItem('cartItems', JSON.stringify(cartItems));
+      updateCartList();
     }
 
     function removeItemFromCart(index) {
@@ -211,7 +250,7 @@
       console.log('Updating cart list');
       const cartList = document.getElementById('cartItems');
       cartList.innerHTML = cartItems.map((item, index) => `
-        <li class="bg-gray-800 p-2 rounded flex justify-between items-center">
+        <li class="bg-gray-700 p-2 rounded-lg flex justify-between items-center shadow-pink-dark">
           <div class="flex items-center">
             <img src="${item.imageUrl}" class="w-10 h-10 rounded-full" alt="Product" loading="lazy">
             <div class="ml-4">
@@ -222,6 +261,13 @@
           <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" aria-label="Remove ${item.title} from cart" onclick="removeItemFromCart(${index})">Remove</button>
         </li>`).join('');
       toggleCartVisibility();
+
+      // Check auto-checkout condition on cart update
+      const autoCheckout = localStorage.getItem('autoCheckout') === 'true';
+      const cloudBlanketCount = countProductInCart("cloud blanket");
+      if (autoCheckout && cloudBlanketCount >= 2) {
+        proceedToCheckout();
+      }
     }
 
     function toggleCartVisibility() {
@@ -232,8 +278,7 @@
         cartLink.classList.remove('hidden');
         cartUrlDisplay.classList.remove('hidden');
         const encodedItems = cartItems.map(item => `${item.variantId}:1`).join(',');
-        const cartUrl = `${shopUrl}/cart/${encodedItems}?discount=lsvip`; // Appending discount code
-        // cartUrlDisplay.innerText = cartUrl; // Display cart URL
+        const cartUrl = `${shopUrl}/cart/${encodedItems}?discount=lsvip`;
         cartLink.onclick = () => window.open(cartUrl, '_blank');
       } else {
         cartLink.classList.add('hidden');
@@ -261,6 +306,14 @@
       fetchProducts();
       updateCartList(); // Ensure cart items are loaded and displayed on page load
       document.getElementById('clearCart').addEventListener('click', clearCart);
+
+      // Load and apply the auto-checkout checkbox state from localStorage
+      const autoCheckout = localStorage.getItem('autoCheckout') === 'true';
+      const autoCheckoutCheckbox = document.getElementById('autoCheckout');
+      autoCheckoutCheckbox.checked = autoCheckout;
+      autoCheckoutCheckbox.addEventListener('change', () => {
+        localStorage.setItem('autoCheckout', autoCheckoutCheckbox.checked);
+      });
     });
 
     // Function to refresh the page
@@ -288,4 +341,5 @@
     setTimeout(refreshPage, timeUntilRefresh());
   </script>
 </body>
+
 </html>
