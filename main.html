@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +9,7 @@
   <style>
     body {
       background-color: #1a1a2e;
-      font-family: 'Arial', 'sans-serif';
+      font-family: 'Arial', sans-serif;
     }
 
     #notification {
@@ -53,6 +52,21 @@
     .shadow-pink-dark {
       box-shadow: 0 4px 6px rgba(240, 98, 146, 0.5);
     }
+
+    select:focus {
+      outline: none;
+      box-shadow: 0 0 5px #d291bc;
+      border-color: #d291bc;
+    }
+
+    #sizeFilter {
+      width: 100%;
+      padding: 8px;
+      background-color: #2d2d44;
+      color: #ffffff;
+      border: 2px solid #d291bc;
+      border-radius: 0.5rem;
+    }
   </style>
 </head>
 
@@ -61,14 +75,71 @@
     <div class="flex flex-wrap">
       <div class="w-full md:w-2/3">
         <h1 class="text-3xl mb-4 text-pink-400">Let the Shopping Begin!</h1>
-        <p class="mb-4">Welcome to your go-to spot for snagging the latest Little Sleepies! Whether we get a sneak peek of the products early or right on time, you’ll find them here. No need to refresh multiple pages—start here about 15-30 seconds before 8:55 AM PST or 11:55 AM EST to catch all the cuteness in one place.</p>
+        <p class="mb-4">Welcome to your go-to spot for snagging the latest Little Sleepies! Start to quicky refresh this page about 15-30 seconds before 8:55 AM PST or 11:55 AM EST to catch all the cuteness in one place.</p>
         <p class="mb-4">Pick your favorites, select the perfect sizes, and pop them into your cart. When you’re ready, hit 'View Cart' to zip over to the store's website, where your chosen items are waiting to be yours.</p>
-        <p class="mb-4">P.S. Blankets are so snuggly and popular that we’ve gone ahead and tucked two into your cart to start. Happy shopping, Mom’s!</p>
+        <p class="mb-4">P.S. Blankets are so snuggly and popular that we’ve gone ahead and tucked two into your cart to start. I've introduced a new feature that allows you to easily check a box to automatically select and check out two blankets. In addition, you can now use the size filter to save your preferred size, ensuring that only products in that size are displayed. Happy shopping, Mom’s!</p>
         <div id="products" class="flex flex-wrap justify-start items-stretch gap-4"></div>
       </div>
       <div class="w-full md:w-1/3 sticky top-0" style="height: calc(100vh - 1rem);">
         <div class="overflow-y-auto p-4 rounded-lg bg-gray-800 shadow-pink">
           <h2 class="text-2xl mb-4 text-pink-400">Shopping Cart</h2>
+
+          <!-- Size Filter Dropdown -->
+          <div class="mb-4">
+            <label for="sizeFilter" class="text-pink-400">Filter by Size:</label>
+            <select id="sizeFilter" class="bg-gray-700 text-white rounded-lg p-2" multiple>
+                <optgroup label="Show All">
+                    <option value="show_all">Show All</option>
+                  </optgroup>
+                  
+                  <optgroup label="Infant Sizes">
+                    <option value="Preemie">Preemie</option>
+                    <option value="Newborn">Newborn</option>
+                    <option value="0-3 months">0-3 months</option>
+                    <option value="3-6 months">3-6 months</option>
+                    <option value="6-12 months">6-12 months</option>
+                    <option value="12-18 months">12-18 months</option>
+                    <option value="18-24 months">18-24 months</option>
+                  </optgroup>
+                  
+                  <optgroup label="Toddler Sizes">
+                    <option value="2T">2T</option>
+                    <option value="3T">3T</option>
+                    <option value="4T">4T</option>
+                    <option value="5/6">5/6</option>
+                    <option value="7/8">7/8</option>
+                  </optgroup>
+                  
+                  <optgroup label="Child Sizes">
+                    <option value="9/10">9/10</option>
+                    <option value="12/14">12/14</option>
+                    <option value="16">16</option>
+                  </optgroup>
+                  
+                  <optgroup label="Adult Sizes">
+                    <option value="XS">XS</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
+                    <option value="XL">XL</option>
+                    <option value="XXL">XXL</option>
+                    <option value="3XL">3XL</option>
+                  </optgroup>
+                  
+                  <optgroup label="Crib Sizes">
+                    <option value="Mini Crib">Mini Crib</option>
+                    <option value="Standard Crib">Standard Crib</option>
+                  </optgroup>
+                  
+                  <optgroup label="Miscellaneous">
+                    <option value="Default Title">Default Title (Items with no sizes)</option>
+                    <option value="Newborn - 3T">Newborn - 3T</option>
+                  </optgroup>
+                  
+            </select>
+            <p class="text-xs text-gray-400 mt-1">Hold down Ctrl to select and unselect multiple sizes.</p>
+          </div>
+
           <ul id="cartItems" class="space-y-2"></ul>
           <div class="mt-4">
             <input type="checkbox" id="autoCheckout" class="mr-2">
@@ -90,6 +161,8 @@
     let cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
     let currentPage = 1;
     const maxPages = 5; // Only fetch up to 5 pages
+    let allProducts = []; // Store all fetched products
+    let selectedSizes = JSON.parse(localStorage.getItem('selectedSizes')) || ["show_all"]; // Load selected sizes from local storage
 
     async function fetchProducts() {
       console.log(`Fetching products from page ${currentPage}`);
@@ -104,8 +177,8 @@
         const data = await response.json();
         console.log(`Fetched data: ${JSON.stringify(data)}`);
         if (data.products && data.products.length > 0) {
-          console.log(`Fetched ${data.products.length} products`);
-          displayProducts(data);
+          allProducts = allProducts.concat(data.products); // Add fetched products to the list
+          displayProducts(allProducts);
           autoAddBlankets(data);
           currentPage++; // Increment the page number
           fetchProducts(); // Recursively fetch the next page
@@ -117,21 +190,25 @@
       }
     }
 
-    function displayProducts(data) {
-      console.log('Displaying products');
+    function displayProducts(products) {
       const container = document.getElementById('products');
-      if (!data.products || data.products.length === 0) {
+      container.innerHTML = ''; // Clear previous products
+
+      const filteredProducts = selectedSizes.includes("show_all") || selectedSizes.length === 0
+        ? products
+        : products.filter(product => product.variants.some(variant => selectedSizes.includes(variant.option1)));
+
+      if (!filteredProducts || filteredProducts.length === 0) {
         container.innerHTML = '<div class="p-4">No Products Found.</div>';
         return;
       }
-      data.products.sort((a, b) => {
+      filteredProducts.sort((a, b) => {
         const keyPhrases = ["cloud blanket", "two-piece short sleeve", "zippy"];
         const aScore = scoreProduct(a.title, keyPhrases);
         const bScore = scoreProduct(b.title, keyPhrases);
         return aScore - bScore;
       });
-      data.products.forEach(product => {
-        console.log(`Displaying product: ${product.title}`);
+      filteredProducts.forEach(product => {
         const productElement = document.createElement('div');
         productElement.className = 'w-full sm:w-1/2 md:w-1/4 p-4';
         const firstImageSrc = product.images[0] ? product.images[0].src : 'placeholder.jpg';
@@ -145,19 +222,20 @@
           </div>`;
         const variantsGrid = productElement.querySelector('.flex-wrap');
         product.variants.forEach(variant => {
-          const variantButton = document.createElement('button');
-          variantButton.className = 'bg-pink-500 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded';
-          variantButton.textContent = `${variant.option1}`;
-          variantButton.setAttribute('aria-label', `Add ${product.title}, Size ${variant.option1} to cart`);
-          variantButton.onclick = () => addVariantToCart(product.title, variant.id, variant.option1, variant.option2, firstImageSrc);
-          variantsGrid.appendChild(variantButton);
+          if (selectedSizes.includes("show_all") || selectedSizes.includes(variant.option1)) {
+            const variantButton = document.createElement('button');
+            variantButton.className = 'bg-pink-500 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded';
+            variantButton.textContent = `${variant.option1}`;
+            variantButton.setAttribute('aria-label', `Add ${product.title}, Size ${variant.option1} to cart`);
+            variantButton.onclick = () => addVariantToCart(product.title, variant.id, variant.option1, variant.option2, firstImageSrc);
+            variantsGrid.appendChild(variantButton);
+          }
         });
         container.appendChild(productElement);
       });
     }
 
     function autoAddBlankets(data) {
-      console.log('Auto-adding blankets');
       data.products.forEach(product => {
         const titleLower = product.title.toLowerCase();
         if (containsAllKeywords(titleLower, ["cloud", "blanket"])) {
@@ -165,7 +243,6 @@
           const numberToAdd = Math.max(0, 2 - cloudBlanketCount); // Ensure we add up to two
           for (let i = 0; i < numberToAdd; i++) {
             if (product.variants && product.variants.length > 0 && product.images && product.images.length > 0) {
-              console.log(`Auto-adding blanket: ${product.title}`);
               addVariantToCart(product.title, product.variants[0].id, product.variants[0].option1, product.variants[0].option2, product.images[0].src);
             }
           }
@@ -174,28 +251,23 @@
     }
 
     function containsAllKeywords(text, keywords) {
-      console.log(`Checking if "${text}" contains all keywords: ${keywords.join(', ')}`);
       return keywords.every(keyword => text.includes(keyword));
     }
 
     function scoreProduct(title, keyPhrases) {
-      console.log(`Scoring product: ${title}`);
       return keyPhrases.reduce((acc, phrase, index) => {
         return title.toLowerCase().includes(phrase) ? Math.min(acc, index) : acc;
       }, keyPhrases.length);
     }
 
     function addVariantToCart(title, variantId, size, color, imageUrl) {
-      console.log(`Adding variant to cart: ${title}, Size: ${size}, Color: ${color}`);
-      // Check if the product is a blanket and count how many are already in the cart
       if (title.toLowerCase().includes("cloud blanket")) {
         const blanketCount = countProductInCart("cloud blanket");
         if (blanketCount >= 2) {
           displayNotification('Error', 'You cannot add more than two cloud blankets.', 'red');
-          return; // Stop adding if there are already two blankets
+          return;
         }
       }
-      // Add the item if it's not a blanket or if there are fewer than two blankets
       cartItems.push({
         title,
         variantId,
@@ -203,11 +275,10 @@
         color,
         imageUrl
       });
-      localStorage.setItem('cartItems', JSON.stringify(cartItems)); // Save to local storage
+      localStorage.setItem('cartItems', JSON.stringify(cartItems));
       updateCartList();
       displayNotification('Added', `Added to cart: ${title}`, 'purple');
 
-      // Check auto-checkout condition
       const autoCheckout = localStorage.getItem('autoCheckout') === 'true';
       const cloudBlanketCount = countProductInCart("cloud blanket");
       if (autoCheckout && cloudBlanketCount >= 2) {
@@ -219,27 +290,23 @@
       const encodedItems = cartItems.map(item => `${item.variantId}:1`).join(',');
       const cartUrl = `${shopUrl}/cart/${encodedItems}?discount=lsvip`;
       window.open(cartUrl, '_blank');
-      // Clear the cart to prevent double checkout
       cartItems = [];
       localStorage.setItem('cartItems', JSON.stringify(cartItems));
       updateCartList();
     }
 
     function removeItemFromCart(index) {
-      console.log(`Removing item from cart at index ${index}`);
       cartItems.splice(index, 1);
-      localStorage.setItem('cartItems', JSON.stringify(cartItems)); // Update local storage
+      localStorage.setItem('cartItems', JSON.stringify(cartItems));
       updateCartList();
       displayNotification('Removed', 'Item removed from cart.', 'red');
     }
 
     function countProductInCart(identifier) {
-      console.log(`Counting products in cart with identifier: ${identifier}`);
       return cartItems.reduce((count, item) => item.title.toLowerCase().includes(identifier.toLowerCase()) ? count + 1 : count, 0);
     }
 
     function clearCart() {
-      console.log('Clearing cart');
       cartItems = [];
       localStorage.setItem('cartItems', JSON.stringify(cartItems));
       updateCartList();
@@ -247,7 +314,6 @@
     }
 
     function updateCartList() {
-      console.log('Updating cart list');
       const cartList = document.getElementById('cartItems');
       cartList.innerHTML = cartItems.map((item, index) => `
         <li class="bg-gray-700 p-2 rounded-lg flex justify-between items-center shadow-pink-dark">
@@ -262,7 +328,6 @@
         </li>`).join('');
       toggleCartVisibility();
 
-      // Check auto-checkout condition on cart update
       const autoCheckout = localStorage.getItem('autoCheckout') === 'true';
       const cloudBlanketCount = countProductInCart("cloud blanket");
       if (autoCheckout && cloudBlanketCount >= 2) {
@@ -271,7 +336,6 @@
     }
 
     function toggleCartVisibility() {
-      console.log('Toggling cart visibility');
       const cartLink = document.getElementById('cartUrl');
       const cartUrlDisplay = document.getElementById('cartUrlDisplay');
       if (cartItems.length > 0) {
@@ -287,7 +351,6 @@
     }
 
     function displayNotification(action, message, color) {
-      console.log(`Displaying notification: ${message}, Color: ${color}`);
       const notificationElement = document.getElementById('notification');
       notificationElement.style.opacity = 1;
       document.getElementById('notificationText').innerText = message;
@@ -302,44 +365,42 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      console.log('DOM content loaded');
       fetchProducts();
-      updateCartList(); // Ensure cart items are loaded and displayed on page load
+      updateCartList();
       document.getElementById('clearCart').addEventListener('click', clearCart);
 
-      // Load and apply the auto-checkout checkbox state from localStorage
       const autoCheckout = localStorage.getItem('autoCheckout') === 'true';
       const autoCheckoutCheckbox = document.getElementById('autoCheckout');
       autoCheckoutCheckbox.checked = autoCheckout;
       autoCheckoutCheckbox.addEventListener('change', () => {
         localStorage.setItem('autoCheckout', autoCheckoutCheckbox.checked);
       });
+
+      const sizeFilter = document.getElementById('sizeFilter');
+      sizeFilter.addEventListener('change', (event) => {
+        selectedSizes = Array.from(event.target.selectedOptions).map(option => option.value);
+        localStorage.setItem('selectedSizes', JSON.stringify(selectedSizes)); // Save selected sizes to local storage
+        displayProducts(allProducts);
+      });
     });
 
-    // Function to refresh the page
     function refreshPage() {
-      console.log('Refreshing page');
       location.reload();
     }
 
-    // Calculate the time until 8:55 AM PST
     function timeUntilRefresh() {
-      console.log('Calculating time until refresh');
       const now = new Date();
       const targetTime = new Date(now);
-      targetTime.setUTCHours(15, 55, 0, 0); // Set target time to 8:55 AM PST (UTC-8)
-      // Convert target time to local time
-      const userOffset = now.getTimezoneOffset() / 60; // Get user's time zone offset in hours
-      targetTime.setHours(targetTime.getHours() - userOffset); // Adjust target time to user's local time
-      if (now > targetTime) { // If it's past 8:55 AM PST today, set target time to tomorrow
+      targetTime.setUTCHours(15, 55, 0, 0);
+      const userOffset = now.getTimezoneOffset() / 60;
+      targetTime.setHours(targetTime.getHours() - userOffset);
+      if (now > targetTime) {
         targetTime.setDate(targetTime.getDate() + 1);
       }
       return targetTime.getTime() - now.getTime();
     }
 
-    // Schedule the page refresh
     setTimeout(refreshPage, timeUntilRefresh());
   </script>
 </body>
-
 </html>
