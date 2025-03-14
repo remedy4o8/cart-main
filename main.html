@@ -171,7 +171,7 @@
 
     async function fetchProducts() {
       if (currentPage > maxPages) return; // Stop fetching when the maximum page count is reached
-      const url = `https://littlesleepies.com/collections/vip-early-access/products.json?page=${currentPage}`;
+      const url = `https://littlesleepies.com/collections/toy-story-pals/products.json?page=${currentPage}`;
       try {
         const response = await fetch(url);
         const data = await response.json();
