@@ -211,7 +211,7 @@
     <span id="notificationText"></span>
   </div>
   <script>
-    const shopUrl = "https://littlesleepies.com";
+    const shopUrl = "https://poshpeanut.com";
     let cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
     const maxPages = 5;
     let allProducts = [];
@@ -223,7 +223,7 @@
 
       allProducts = [];
       let page = 1;
-      const baseUrl = `${shopUrl}/collections/vip-early-access/products.json?limit=50&page=`;
+      const baseUrl = `${shopUrl}/collections/vip-shop-early/products.json?limit=50&page=`;
 
       try {
         while (page <= maxPages) {
