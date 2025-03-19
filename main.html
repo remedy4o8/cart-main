@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Remedy's Magic Shopping Cart</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" media="print" onload="this.media='all'">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -12,6 +12,7 @@
       color: #e2e8f0;
       font-family: 'Arial', sans-serif;
       line-height: 1.5;
+      overflow-y: scroll;
     }
     header {
       position: fixed;
@@ -211,226 +212,276 @@
     <span id="notificationText"></span>
   </div>
   <script>
+    // Helper function for logging with timestamps
+    const log = (message, data = '') => console.log(`[${new Date().toISOString()}] ${message}`, data);
+
     const shopUrl = "https://poshpeanut.com";
     let cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-    const maxPages = 5;
     let allProducts = [];
     let selectedSizes = JSON.parse(localStorage.getItem('selectedSizes')) || ["show_all"];
+    const maxPages = 5;
 
-    async function fetchAllProducts() {
-      const loadingHTML = `<div style="text-align: center; padding: 1rem;"><i class="fas fa-spinner fa-spin" style="color: #d291bc; font-size: 2rem;"></i><p style="color: #a0aec0; margin-top: 0.5rem;">Loading products...</p></div>`;
-      document.getElementById('products').innerHTML = loadingHTML;
+    log('Initial State', { cartItems, selectedSizes });
 
+    const fetchAllProducts = async () => {
+      log('fetchAllProducts: Starting product fetch');
+      const productsDiv = document.getElementById('products');
+      productsDiv.innerHTML = '<div style="text-align: center; padding: 1rem;"><i class="fas fa-spinner fa-spin" style="color: #d291bc; font-size: 2rem;"></i><p style="color: #a0aec0; margin-top: 0.5rem;">Loading products...</p></div>';
       allProducts = [];
-      let page = 1;
       const baseUrl = `${shopUrl}/collections/vip-shop-early/products.json?limit=50&page=`;
 
-      try {
-        while (page <= maxPages) {
-          const response = await fetch(`${baseUrl}${page}`);
-          if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      for (let page = 1; page <= maxPages; page++) {
+        log(`fetchAllProducts: Fetching page ${page}`);
+        try {
+          const response = await fetch(`${baseUrl}${page}`, { cache: 'force-cache' });
+          log(`fetchAllProducts: Response status for page ${page}`, response.status);
+          if (!response.ok) {
+            log(`fetchAllProducts: Fetch failed for page ${page}, breaking loop`);
+            break;
+          }
           const data = await response.json();
-          if (!data.products || data.products.length === 0) break;
-          allProducts = allProducts.concat(data.products);
-          page++;
-          if (page <= maxPages) await new Promise(resolve => setTimeout(resolve, 500));
-        }
-
-        allProducts.sort((a, b) => {
-          const keyPhrases = ["cloud blanket", "two-piece short sleeve", "zippy"];
-          const aScore = scoreProduct(a.title, keyPhrases);
-          const bScore = scoreProduct(b.title, keyPhrases);
-          return aScore - bScore;
-        });
-
-        autoAddBlankets(allProducts);
-        displayProducts(allProducts);
-      } catch (error) {
-        document.getElementById('products').innerHTML = `<div style="color: #e3342f; padding: 1rem;">Error fetching products: ${error.message}</div>`;
-      }
-    }
-
-    function autoAddBlankets(products) {
-      products.forEach(product => {
-        const titleLower = product.title.toLowerCase();
-        if (containsAllKeywords(titleLower, ["cloud", "blanket"])) {
-          const cloudBlanketCount = countProductInCart("cloud blanket");
-          const numberToAdd = Math.max(0, 2 - cloudBlanketCount);
-          for (let i = 0; i < numberToAdd; i++) {
-            if (product.variants?.length && product.images?.length) {
-              addVariantToCart(product.title, product.variants[0].id, product.variants[0].option1, product.variants[0].option2, product.images[0].src);
-            }
+          log(`fetchAllProducts: Data received for page ${page}`, data.products?.length);
+          if (!data.products?.length) {
+            log(`fetchAllProducts: No products on page ${page}, breaking loop`);
+            break;
           }
-        }
-      });
-    }
-
-    function containsAllKeywords(text, keywords) {
-      return keywords.every(keyword => text.includes(keyword));
-    }
-
-    function scoreProduct(title, keyPhrases) {
-      return keyPhrases.reduce((acc, phrase, index) => {
-        return title.toLowerCase().includes(phrase) ? Math.min(acc, index) : acc;
-      }, keyPhrases.length);
-    }
-
-    function displayProducts(products) {
-      const container = document.getElementById('products');
-      container.innerHTML = '';
-      const filteredProducts = selectedSizes.includes("show_all") || selectedSizes.length === 0
-        ? products
-        : products.filter(product => product.variants.some(variant => selectedSizes.includes(variant.option1)));
-
-      filteredProducts.forEach(product => {
-        const productElement = document.createElement('div');
-        productElement.className = 'product';
-        const firstImageSrc = product.images[0]?.src || 'placeholder.jpg';
-        productElement.innerHTML = `
-          <img src="${firstImageSrc}" alt="${product.title}" loading="lazy">
-          <div class="product-details">
-            <div class="product-title">${product.title} $${product.variants[0].price}</div>
-            <div class="variants"></div>
-          </div>`;
-        const variantsGrid = productElement.querySelector('.variants');
-        product.variants.forEach(variant => {
-          if (selectedSizes.includes("show_all") || selectedSizes.includes(variant.option1)) {
-            const variantButton = document.createElement('button');
-            variantButton.className = 'btn-pink';
-            variantButton.textContent = variant.option1;
-            variantButton.setAttribute('aria-label', `Add ${product.title}, Size ${variant.option1} to cart`);
-            variantButton.onclick = () => addVariantToCart(product.title, variant.id, variant.option1, variant.option2, firstImageSrc);
-            variantsGrid.appendChild(variantButton);
-          }
-        });
-        container.appendChild(productElement);
-      });
-    }
-
-    function addVariantToCart(title, variantId, size, color, imageUrl) {
-      if (title.toLowerCase().includes("cloud blanket")) {
-        const blanketCount = countProductInCart("cloud blanket");
-        if (blanketCount >= 2) {
-          displayNotification('Error', 'You cannot add more than two cloud blankets.', 'red');
+          allProducts.push(...data.products);
+          log(`fetchAllProducts: Added ${data.products.length} products, total now ${allProducts.length}`);
+          await new Promise(r => setTimeout(r, 200));
+          log(`fetchAllProducts: Throttling for 200ms after page ${page}`);
+        } catch (e) {
+          log(`fetchAllProducts: Error fetching page ${page}`, e.message);
+          productsDiv.innerHTML = `<div style="color: #e3342f; padding: 1rem;">Error: ${e.message}</div>`;
           return;
         }
       }
+
+      log('fetchAllProducts: Sorting products');
+      allProducts.sort((a, b) => {
+        const keyPhrases = ["cloud blanket", "two-piece short sleeve", "zippy"];
+        const aIndex = keyPhrases.findIndex(p => a.title.toLowerCase().includes(p));
+        const bIndex = keyPhrases.findIndex(p => b.title.toLowerCase().includes(p));
+        log(`fetchAllProducts: Sorting - ${a.title} (${aIndex}) vs ${b.title} (${bIndex})`);
+        return aIndex - bIndex;
+      });
+
+      log('fetchAllProducts: Calling autoAddBlankets');
+      autoAddBlankets();
+      log('fetchAllProducts: Calling displayProducts');
+      displayProducts();
+      log('fetchAllProducts: Fetch complete', { totalProducts: allProducts.length });
+    };
+
+    const autoAddBlankets = () => {
+      log('autoAddBlankets: Starting');
+      const blanketCount = cartItems.filter(i => i.title.toLowerCase().includes("cloud blanket")).length;
+      log('autoAddBlankets: Current blanket count', blanketCount);
+      allProducts.forEach((p, index) => {
+        log(`autoAddBlankets: Checking product ${index}: ${p.title}`);
+        if (p.title.toLowerCase().includes("cloud blanket") && blanketCount < 2 && p.variants?.length && p.images?.length) {
+          const toAdd = Math.min(2 - blanketCount, p.variants.length);
+          log(`autoAddBlankets: Adding ${toAdd} variants for ${p.title}`);
+          for (let i = 0; i < toAdd; i++) {
+            log(`autoAddBlankets: Adding variant ${i + 1} of ${p.title}`);
+            addVariantToCart(p.title, p.variants[i].id, p.variants[i].option1, p.variants[i].option2, p.images[0].src);
+          }
+        } else {
+          log(`autoAddBlankets: Skipping ${p.title} - Conditions not met`);
+        }
+      });
+      log('autoAddBlankets: Complete');
+    };
+
+    const displayProducts = () => {
+      log('displayProducts: Starting');
+      const container = document.getElementById('products');
+      container.innerHTML = '';
+      const filtered = selectedSizes.includes("show_all") ? allProducts : allProducts.filter(p => p.variants.some(v => selectedSizes.includes(v.option1)));
+      log('displayProducts: Filtered products', { total: filtered.length, selectedSizes });
+
+      filtered.forEach((p, index) => {
+        log(`displayProducts: Rendering product ${index}: ${p.title}`);
+        const div = document.createElement('div');
+        div.className = 'product';
+        div.innerHTML = `
+          <img src="${p.images[0]?.src || 'placeholder.jpg'}" alt="${p.title}" loading="lazy">
+          <div class="product-details">
+            <div class="product-title">${p.title} $${p.variants[0].price}</div>
+            <div class="variants"></div>
+          </div>`;
+        const variants = div.querySelector('.variants');
+        p.variants.forEach((v, vIndex) => {
+          if (selectedSizes.includes("show_all") || selectedSizes.includes(v.option1)) {
+            log(`displayProducts: Adding variant ${vIndex} for ${p.title}: ${v.option1}`);
+            const btn = document.createElement('button');
+            btn.className = 'btn-pink';
+            btn.textContent = v.option1;
+            btn.onclick = () => {
+              log(`displayProducts: Button clicked for ${p.title}, variant ${v.option1}`);
+              addVariantToCart(p.title, v.id, v.option1, v.option2, p.images[0].src);
+            };
+            variants.appendChild(btn);
+          }
+        });
+        container.appendChild(div);
+      });
+      log('displayProducts: Complete', { rendered: filtered.length });
+    };
+
+    const addVariantToCart = (title, variantId, size, color, imageUrl) => {
+      log('addVariantToCart: Starting', { title, variantId, size, color, imageUrl });
+      const blanketCount = cartItems.filter(i => i.title.toLowerCase().includes("cloud blanket")).length;
+      if (title.toLowerCase().includes("cloud blanket") && blanketCount >= 2) {
+        log('addVariantToCart: Blocked - Max 2 cloud blankets');
+        showNotification('Error', 'You cannot add more than two cloud blankets.', 'red');
+        return;
+      }
       cartItems.push({ title, variantId, size, color, imageUrl });
+      log('addVariantToCart: Item added to cart', cartItems);
       localStorage.setItem('cartItems', JSON.stringify(cartItems));
+      log('addVariantToCart: Updated localStorage');
       updateCartList();
-      displayNotification('Added', `Added to cart: ${title}`, 'purple');
-
-      const cartList = document.getElementById('cartItems');
-      cartList.scrollTop = cartList.scrollHeight;
-
+      showNotification('Added', `Added to cart: ${title}`, 'purple');
       const autoCheckout = localStorage.getItem('autoCheckout') === 'true';
-      const cloudBlanketCount = countProductInCart("cloud blanket");
-      if (autoCheckout && cloudBlanketCount >= 2) {
+      log('addVariantToCart: AutoCheckout status', autoCheckout);
+      if (autoCheckout && cartItems.filter(i => i.title.toLowerCase().includes("cloud blanket")).length >= 2) {
+        log('addVariantToCart: Triggering auto checkout');
         proceedToCheckout();
       }
-    }
+      log('addVariantToCart: Complete');
+    };
 
-    function countProductInCart(identifier) {
-      return cartItems.reduce((count, item) => item.title.toLowerCase().includes(identifier.toLowerCase()) ? count + 1 : count, 0);
-    }
-
-    function updateCartList() {
+    const updateCartList = () => {
+      log('updateCartList: Starting');
       const cartList = document.getElementById('cartItems');
-      cartList.innerHTML = cartItems.map((item, index) => `
-        <li>
-          <div style="display: flex; align-items: center;">
-            <img src="${item.imageUrl}" alt="Product" loading="lazy">
-            <div class="cart-details">
-              <p class="cart-title">${item.title}</p>
-              <p class="cart-size">Size: ${item.size}</p>
+      cartList.innerHTML = cartItems.map((item, i) => {
+        log(`updateCartList: Rendering cart item ${i}: ${item.title}`);
+        return `
+          <li>
+            <div style="display: flex; align-items: center;">
+              <img src="${item.imageUrl}" alt="Product" loading="lazy">
+              <div class="cart-details">
+                <p class="cart-title">${item.title}</p>
+                <p class="cart-size">Size: ${item.size}</p>
+              </div>
             </div>
-          </div>
-          <button class="btn-red" aria-label="Remove ${item.title} from cart" onclick="removeItemFromCart(${index})">Remove</button>
-        </li>`).join('');
+            <button class="btn-red" onclick="removeItemFromCart(${i})">Remove</button>
+          </li>`;
+      }).join('');
+      log('updateCartList: Cart list updated', { itemCount: cartItems.length });
       toggleCartVisibility();
-    }
+      log('updateCartList: Complete');
+    };
 
-    function removeItemFromCart(index) {
+    const removeItemFromCart = index => {
+      log('removeItemFromCart: Starting', { index });
+      const removedItem = cartItems[index];
       cartItems.splice(index, 1);
+      log('removeItemFromCart: Item removed', { removedItem, newCart: cartItems });
       localStorage.setItem('cartItems', JSON.stringify(cartItems));
+      log('removeItemFromCart: Updated localStorage');
       updateCartList();
-      displayNotification('Removed', 'Item removed from cart.', 'red');
-    }
+      showNotification('Removed', 'Item removed from cart.', 'red');
+      log('removeItemFromCart: Complete');
+    };
 
-    function toggleCartVisibility() {
+    const toggleCartVisibility = () => {
+      log('toggleCartVisibility: Starting');
       const cartLink = document.getElementById('cartUrl');
-      cartLink.classList.toggle('hidden', cartItems.length === 0);
-      if (cartItems.length > 0) {
-        const encodedItems = cartItems.map(item => `${item.variantId}:1`).join(',');
-        const cartUrl = `${shopUrl}/cart/${encodedItems}?discount=lsvip`;
-        cartLink.onclick = () => window.open(cartUrl, '_blank');
+      const isHidden = !cartItems.length;
+      cartLink.classList.toggle('hidden', isHidden);
+      log('toggleCartVisibility: Cart link visibility', { isHidden });
+      if (cartItems.length) {
+        const url = `${shopUrl}/cart/${cartItems.map(i => `${i.variantId}:1`).join(',')}?discount=lsvip`;
+        log('toggleCartVisibility: Generated cart URL', url);
+        cartLink.onclick = () => {
+          log('toggleCartVisibility: Cart URL clicked', url);
+          window.open(url, '_blank');
+        };
       }
-    }
+      log('toggleCartVisibility: Complete');
+    };
 
-    function proceedToCheckout() {
-      const encodedItems = cartItems.map(item => `${item.variantId}:1`).join(',');
-      const cartUrl = `${shopUrl}/cart/${encodedItems}?discount=lsvip`;
-      window.open(cartUrl, '_blank');
+    const proceedToCheckout = () => {
+      log('proceedToCheckout: Starting');
+      const url = `${shopUrl}/cart/${cartItems.map(i => `${i.variantId}:1`).join(',')}?discount=lsvip`;
+      log('proceedToCheckout: Opening URL', url);
+      window.open(url, '_blank');
       cartItems = [];
+      log('proceedToCheckout: Cart cleared', cartItems);
       localStorage.setItem('cartItems', JSON.stringify(cartItems));
+      log('proceedToCheckout: Updated localStorage');
       updateCartList();
-    }
+      log('proceedToCheckout: Complete');
+    };
 
-    function displayNotification(action, message, color) {
-      const notificationElement = document.getElementById('notification');
-      notificationElement.style.opacity = 1;
-      document.getElementById('notificationText').innerText = message;
-      notificationElement.className = color === 'red' ? 'notification-red' : 'notification-purple';
-      setTimeout(() => notificationElement.style.opacity = 0, 2500);
-    }
+    const showNotification = (action, message, color) => {
+      log('showNotification: Starting', { action, message, color });
+      const n = document.getElementById('notification');
+      n.style.opacity = 1;
+      document.getElementById('notificationText').textContent = message;
+      n.className = color === 'red' ? 'notification-red' : 'notification-purple';
+      log('showNotification: Notification displayed');
+      setTimeout(() => {
+        n.style.opacity = 0;
+        log('showNotification: Notification hidden');
+      }, 2500);
+    };
 
     document.addEventListener('DOMContentLoaded', () => {
+      log('DOM Loaded: Initializing');
       fetchAllProducts();
       updateCartList();
 
-      const sizes = [
-        "show_all", "Preemie", "Newborn", "0-3 months", "3-6 months", "6-12 months", "12-18 months", "18-24 months",
-        "2T", "3T", "4T", "5/6", "7/8", "9/10", "12/14", "16",
-        "XS", "S", "M", "L", "XL", "XXL", "3XL",
-        "Mini Crib", "Standard Crib", "Default Title", "Newborn - 3T"
-      ];
-      const sizeFilterGrid = document.getElementById('sizeFilterGrid');
-      sizes.forEach(size => {
+      const sizes = ["show_all", "Preemie", "Newborn", "0-3 months", "3-6 months", "6-12 months", "12-18 months", "18-24 months", "2T", "3T", "4T", "5/6", "7/8", "9/10", "12/14", "16", "XS", "S", "M", "L", "XL", "XXL", "3XL", "Mini Crib", "Standard Crib", "Default Title", "Newborn - 3T"];
+      const sizeGrid = document.getElementById('sizeFilterGrid');
+      log('DOM Loaded: Generating size filters', { sizes });
+      sizes.forEach((size, index) => {
+        log(`DOM Loaded: Creating size tag ${index}: ${size}`);
         const tag = document.createElement('span');
         tag.className = `size-tag ${selectedSizes.includes(size) ? 'active' : ''}`;
         tag.textContent = size;
         tag.onclick = () => {
-          if (size === "show_all") {
-            selectedSizes = ["show_all"];
-          } else {
-            selectedSizes = selectedSizes.filter(s => s !== "show_all");
-            const index = selectedSizes.indexOf(size);
-            if (index === -1) selectedSizes.push(size);
-            else selectedSizes.splice(index, 1);
-          }
+          log(`Size Filter Clicked: ${size}`);
+          selectedSizes = size === "show_all" ? ["show_all"] : selectedSizes.filter(s => s !== "show_all").includes(size) ? selectedSizes.filter(s => s !== size) : [...selectedSizes.filter(s => s !== "show_all"), size];
+          log('Size Filter: Updated selectedSizes', selectedSizes);
           localStorage.setItem('selectedSizes', JSON.stringify(selectedSizes));
-          sizeFilterGrid.querySelectorAll('.size-tag').forEach(s => {
-            s.classList.toggle('active', selectedSizes.includes(s.textContent));
+          log('Size Filter: Updated localStorage');
+          sizeGrid.querySelectorAll('.size-tag').forEach(s => {
+            const isActive = selectedSizes.includes(s.textContent);
+            s.classList.toggle('active', isActive);
+            log(`Size Filter: Toggling ${s.textContent} to ${isActive ? 'active' : 'inactive'}`);
           });
-          displayProducts(allProducts);
+          displayProducts();
         };
-        sizeFilterGrid.appendChild(tag);
+        sizeGrid.appendChild(tag);
       });
 
-      document.getElementById('clearCart').addEventListener('click', () => {
+      document.getElementById('clearCart').onclick = () => {
+        log('Clear Cart Clicked');
         cartItems = [];
+        log('Clear Cart: Cart cleared', cartItems);
         localStorage.setItem('cartItems', JSON.stringify(cartItems));
+        log('Clear Cart: Updated localStorage');
         updateCartList();
-        displayNotification('Cleared', 'All items have been removed from the cart.', 'red');
-      });
+        showNotification('Cleared', 'All items have been removed from the cart.', 'red');
+      };
 
-      const autoCheckoutCheckbox = document.getElementById('autoCheckout');
-      autoCheckoutCheckbox.checked = localStorage.getItem('autoCheckout') === 'true';
-      autoCheckoutCheckbox.addEventListener('change', () => {
-        localStorage.setItem('autoCheckout', autoCheckoutCheckbox.checked);
-      });
+      const autoCheckout = document.getElementById('autoCheckout');
+      autoCheckout.checked = localStorage.getItem('autoCheckout') === 'true';
+      log('DOM Loaded: AutoCheckout initial state', autoCheckout.checked);
+      autoCheckout.onchange = () => {
+        log('AutoCheckout Changed', autoCheckout.checked);
+        localStorage.setItem('autoCheckout', autoCheckout.checked);
+        log('AutoCheckout: Updated localStorage');
+      };
 
-      document.getElementById('refreshProducts').addEventListener('click', fetchAllProducts);
+      document.getElementById('refreshProducts').onclick = () => {
+        log('Refresh Products Clicked');
+        fetchAllProducts();
+      };
+
+      log('DOM Loaded: Initialization complete');
     });
   </script>
 </body>
