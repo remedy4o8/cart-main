@@ -229,7 +229,7 @@
       productsDiv.innerHTML = '<div style="text-align: center; padding: 1rem;"><i class="fas fa-spinner fa-spin" style="color: #d291bc; font-size: 2rem;"></i><p style="color: #a0aec0; margin-top: 0.5rem;">Loading products...</p></div>';
       allProducts = [];
       const timestamp = Date.now(); // Add timestamp for cache busting
-      const baseUrl = `${shopUrl}/collections/vip-shop-early/products.json?limit=50&page=`;
+      const baseUrl = `${shopUrl}/collections/vip-early-access/products.json?limit=50&page=`;
 
       for (let page = 1; page <= maxPages; page++) {
         log(`fetchAllProducts: Fetching page ${page}`);
